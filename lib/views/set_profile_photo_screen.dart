@@ -34,6 +34,7 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
   var selectedMenuItems;
   String interestOne = '';
   String interestTwo = '';
+  String interestThree = '';
 
   Future pickImage(ImageSource source) async {
     final pickedFile = await picker.getImage(
@@ -114,6 +115,7 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
         url,
         interestOne,
         interestTwo,
+        interestThree,
         selectedMenuItems,
       );
 
@@ -136,13 +138,17 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
       await usersRef.get().then((doc) async {
         String _interestOne = doc.data()['interestOne'].toString();
         String _interestTwo = doc.data()['interestTwo'].toString();
+        String _interestThree = doc.data()['interestThree'].toString();
         String _profileImg = doc.data()['profileImage'];
+        String _about = doc.data()['aboutUser'];
 
         kGetStorage.write('myInterestOne', _interestOne);
         kGetStorage.write('myInterestTwo', _interestTwo);
+        kGetStorage.write('myInterestThree', _interestThree);
         kGetStorage.write('myProfilePicture', _profileImg);
         kGetStorage.write('myName', resultUser.displayName);
         kGetStorage.write('myId', resultUser.uid);
+        kGetStorage.write('myAbout', _about);
 
         Get.offAll(() => HomeInit());
       });
@@ -152,8 +158,6 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
           loading = false;
         });
       }
-
-      print(e);
 
       singleButtonDialogue('Sorry, an unexpected error occured');
     }
@@ -374,6 +378,7 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
                                       selectedMenuItems = items;
                                       interestOne = items[1];
                                       interestTwo = items[0];
+                                      interestThree = items[3];
                                       hasSelectedItem = true;
                                     });
                                   }

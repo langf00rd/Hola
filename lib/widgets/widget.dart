@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -5,9 +6,12 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:reflex/models/constants.dart';
-import 'package:reflex/views/customize_screen.dart';
+import 'package:reflex/services/services.dart';
+import 'package:reflex/views/club_info.dart';
+import 'package:reflex/views/club_messaging_screen.dart';
 import 'package:reflex/views/messaging_screen.dart';
-import 'package:reflex/views/start_club.dart';
+import 'package:reflex/views/search_screen.dart';
+import 'package:reflex/views/user.dart';
 import 'package:reflex/views/view_photo_screen.dart';
 
 Widget inputField(
@@ -46,6 +50,35 @@ Widget inputField(
         ),
       ),
     ],
+  );
+}
+
+Widget textTabLabel(String _tabText) {
+  return Padding(
+    padding: EdgeInsets.only(bottom: 15.0),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          _tabText,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget myTabBar(_tabs, _controller) {
+  return TabBar(
+    tabs: _tabs,
+    controller: _controller,
+    indicatorColor: kPrimaryColor,
+    indicatorSize: TabBarIndicatorSize.tab,
+    unselectedLabelColor: Colors.grey[600],
+    labelColor: kPrimaryColor,
   );
 }
 
@@ -157,265 +190,575 @@ Widget signButton(String _btnText, _func) {
   );
 }
 
-class AppMainDrawer extends StatefulWidget {
-  @override
-  _AppMainDrawerState createState() => _AppMainDrawerState();
-}
-
-class _AppMainDrawerState extends State<AppMainDrawer> {
-  bool _themeSwitchValue = kGetStorage.read('isDarkTheme');
-
-  void changeAppTheme(bool _themeBool) async {
-    if (mounted) {
-      setState(() {
-        _themeSwitchValue = !_themeSwitchValue;
-      });
-    }
-
-    kGetStorage.remove('isDarkTheme');
-
-    Get.changeTheme(
-      Get.isDarkMode ? ThemeData.light() : ThemeData.dark(),
-    );
-
-    kGetStorage.write('isDarkTheme', _themeSwitchValue);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      elevation: 0,
-      child: Container(
-        height: MediaQuery.of(context).size.height,
-        color: kPrimaryColor,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-              Container(
-                width: MediaQuery.of(context).size.width / 2 + 100,
-                // color: Colors.white,
-                padding: EdgeInsets.only(top: 20, left: 10, right: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: NetworkImage(kMyProfileImage),
-                    ),
-                    sideDrawerItem(
-                        'My profile',
-                        Icon(
-                          CupertinoIcons.person,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        CustomizeScreen(),
-                      );
-                    }),
-                    Divider(),
-                    sideDrawerItem(
-                        'Customize app interface',
-                        Icon(
-                          CupertinoIcons.paintbrush,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        CustomizeScreen(),
-                      );
-                    }),
-                    sideDrawerItem(
-                        'Start a club',
-                        Icon(
-                          CupertinoIcons.person_2,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        StartClub(),
-                      );
-                    }),
-                    sideDrawerItem(
-                        'New conversation',
-                        Icon(
-                          CupertinoIcons.plus_bubble,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        CustomizeScreen(),
-                      );
-                    }),
-                    sideDrawerItem(
-                        'Share an update',
-                        Icon(
-                          CupertinoIcons.timer,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        CustomizeScreen(),
-                      );
-                    }),
-                    sideDrawerItem(
-                        'Logout',
-                        Icon(
-                          Icons.logout,
-                          color: Colors.white,
-                        ), () {
-                      Get.to(
-                        CustomizeScreen(),
-                      );
-                    }),
-                    Row(
-                      children: [
-                        sideDrawerItem(
-                          'Dark Mode',
-                          Icon(
-                            CupertinoIcons.moon_fill,
-                            color: Colors.white,
-                          ),
-                          () {},
-                        ),
-                        Switch(
-                          value: _themeSwitchValue,
-                          onChanged: (value) => changeAppTheme(value),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 Widget sideDrawerItem(String _text, Icon _icon, Function _func) {
   return GestureDetector(
     onTap: _func,
     child: Container(
-      padding: EdgeInsets.fromLTRB(0, 15, 10, 15),
+      padding: EdgeInsets.symmetric(vertical: 13, horizontal: 10),
       child: Row(
         children: [
           _icon,
           SizedBox(width: 8),
-          Text(_text, style: kWhiteFont16),
+          Text(_text, style: kFont16),
         ],
       ),
     ),
   );
 }
 
-Widget textTabLabel(String _tabText) {
-  return Padding(
-    padding: EdgeInsets.only(bottom: 15.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          _tabText,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.black,
-          ),
-        ),
-      ],
-    ),
-  );
+class RoomChatItem extends StatefulWidget {
+  final _roomUsers;
+  RoomChatItem(this._roomUsers);
+
+  @override
+  _RoomChatItemState createState() => _RoomChatItemState();
 }
 
-Widget messageTile(String _name, _profilePhoto, _userId) {
-  return Container(
-    child: Column(
-      children: [
-        ListTile(
-          onTap: () => Get.to(
-            MessagingScreen(_name, _profilePhoto, _userId),
-          ),
-          contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-          title: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _name == kMyName ? 'Saved' : _name,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Get.isDarkMode ? Colors.white : Colors.black,
-                  // fontFamily: kDefaultFontBold,
-                  fontWeight: FontWeight.bold,
-                ),
+class _RoomChatItemState extends State<RoomChatItem> {
+  String _roomProfileImage = kTemporalImageUrl;
+  String _roomName = '';
+  String _otherUserId = '';
+
+  Future getRoomInfo() async {
+    try {
+      var otherUserId = widget._roomUsers.firstWhere(
+        (id) => id != kMyId,
+        orElse: () => null,
+      );
+
+      if (mounted) {
+        setState(() {
+          _otherUserId = otherUserId;
+        });
+      }
+
+      DocumentReference otherUserRef = kUsersRef.doc(otherUserId);
+
+      await otherUserRef.get().then((doc) async {
+        String _otherUserProfileImage = doc.data()['profileImage'].toString();
+        String _otherUserName = doc.data()['name'];
+
+        if (mounted) {
+          setState(() {
+            _roomProfileImage = _otherUserProfileImage;
+            _roomName = _otherUserName;
+          });
+        }
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getRoomInfo();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _roomName != '' && _roomProfileImage != null
+        ? MessageTile(_roomName, _roomProfileImage, _otherUserId)
+        : Container();
+  }
+}
+
+class MessageTile extends StatefulWidget {
+  final String _name;
+  final String _profilePhoto;
+  final String _userId;
+
+  MessageTile(this._name, this._profilePhoto, this._userId);
+
+  @override
+  _MessageTileState createState() => _MessageTileState();
+}
+
+class _MessageTileState extends State<MessageTile> {
+  int _num = 0;
+  var roomVisitTime;
+  String lastRoomMessage = '';
+  String lastRoomMessageSenderId = '';
+
+  _getRoomData() async {
+    var _roomId = await getRoomId(widget._userId);
+
+    await kChatRoomsRef
+        .doc(_roomId)
+        .collection('RoomMessages')
+        .doc(kMyId)
+        .snapshots()
+        .forEach((element) {
+      if (mounted) {
+        setState(() {
+          roomVisitTime = element.data()['roomVisitTime'];
+        });
+      }
+
+      kChatRoomsRef.doc(_roomId).snapshots().forEach((element) {
+        if (mounted) {
+          setState(() {
+            lastRoomMessage = element.data()['lastRoomMessage'];
+            lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
+          });
+        }
+      });
+
+      kChatRoomsRef
+          .doc(_roomId)
+          .collection('RoomMessages')
+          // .where('sender', isNotEqualTo: kMyName)
+          .where('sendTime', isGreaterThan: roomVisitTime)
+          .get()
+          .then((value) {
+        if (mounted) {
+          setState(() {
+            _num = value.docs.length;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getRoomData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime myDateTime =
+        roomVisitTime != null ? roomVisitTime.toDate() : DateTime.now();
+    String _convertedTime = DateFormat('K:mm').format(myDateTime);
+
+    return Container(
+      // height: 200,
+      child: Column(
+        children: [
+          ListTile(
+            onTap: () => Get.to(
+              MessagingScreen(
+                widget._name,
+                widget._profilePhoto,
+                widget._userId,
               ),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 0, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  '3',
+            ),
+            contentPadding: EdgeInsets.fromLTRB(10, 3, 10, 3),
+            title: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget._name == kMyName ? 'Saved' : widget._name,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 15,
+                    color: Get.isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
-              ),
-            ],
-          ),
-          leading: _name != kMyName
-              ? Hero(
-                  tag: _userId,
-                  child: Container(
+                _num > 0 && roomVisitTime != null
+                    ? Container(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          _num.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ],
+            ),
+            leading: widget._name != kMyName
+                ? Container(
+                    height: 55,
+                    width: 55,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color:
+                          Get.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      image: DecorationImage(
+                        image: NetworkImage(widget._profilePhoto),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                : Container(
                     height: 60,
                     width: 55,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
                       color: Colors.grey[200],
-                      image: DecorationImage(
-                        image: NetworkImage(_profilePhoto),
-                        fit: BoxFit.cover,
-                      ),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.bookmark_fill,
+                      color: kPrimaryColor,
                     ),
                   ),
-                )
-              : Container(
-                  height: 60,
-                  width: 55,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    color: Colors.grey[200],
-                  ),
-                  child: Icon(
-                    CupertinoIcons.bookmark_fill,
-                    color: kPrimaryColor,
+            subtitle: Column(
+              children: [
+                SizedBox(height: 10),
+                Container(
+                  height: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          lastRoomMessageSenderId != kMyId
+                              ? lastRoomMessage
+                              : 'You: $lastRoomMessage',
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _convertedTime,
+                        style: kGrey11,
+                      ),
+                    ],
                   ),
                 ),
-          subtitle: Column(
-            children: [
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'yeah i also love chimichangas and ice cream cones with cherry',
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        // fontFamily: kDefaultFont,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '12:43 pm',
-                    style: kGrey11,
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
+          // Divider(),
+        ],
+      ),
+    );
+  }
+}
+
+class ClubMessageTile extends StatefulWidget {
+  final String _name;
+  final String _profilePhoto;
+  final String _clubId;
+  final String _clubDescription;
+  final String _clubCategory;
+
+  ClubMessageTile(
+    this._name,
+    this._profilePhoto,
+    this._clubId,
+    this._clubDescription,
+    this._clubCategory,
+  );
+
+  @override
+  ClubMessageTileState createState() => ClubMessageTileState();
+}
+
+class ClubMessageTileState extends State<ClubMessageTile> {
+  int _num = 0;
+  var roomVisitTime;
+  var lastRoomMessageTime;
+  String lastRoomMessage = '';
+  String lastRoomMessageSenderId = '';
+
+  _getRoomData() async {
+    await kClubChatRoomsRef
+        .doc(widget._clubId)
+        .collection('RoomLogs')
+        .doc(kMyId)
+        .snapshots()
+        .forEach((element) {
+      if (mounted) {
+        setState(() {
+          roomVisitTime = element.data()['roomVisitTime'];
+        });
+      }
+
+      kClubChatRoomsRef.doc(widget._clubId).snapshots().forEach((element) {
+        if (mounted) {
+          setState(() {
+            lastRoomMessage = element.data()['lastRoomMessage'];
+            lastRoomMessageTime = element.data()['lastRoomMessageTime'];
+            lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
+          });
+        }
+      });
+
+      kClubChatRoomsRef
+          .doc(widget._clubId)
+          .collection('RoomMessages')
+          // .where('sender', isNotEqualTo: kMyName)
+          .where('sendTime', isGreaterThan: roomVisitTime)
+          .get()
+          .then((value) {
+        if (mounted) {
+          setState(() {
+            _num = value.docs.length;
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getRoomData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime myDateTime = lastRoomMessageTime != null
+        ? lastRoomMessageTime.toDate()
+        : DateTime.now();
+    String _convertedTime = DateFormat('K:mm').format(myDateTime);
+
+    return Container(
+      child: Column(
+        children: [
+          ListTile(
+            onTap: () => Get.to(
+              ClubMessagingScreen(
+                widget._clubId,
+                widget._profilePhoto,
+                widget._name,
+                widget._clubDescription,
+                widget._clubCategory,
+              ),
+            ),
+            contentPadding: EdgeInsets.fromLTRB(10, 3, 10, 3),
+            title: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget._name == kMyName ? 'Saved' : widget._name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Get.isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                _num > 0 && roomVisitTime != null
+                    ? Container(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          _num.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ],
+            ),
+            leading: GestureDetector(
+              onTap: () => Get.to(
+                ClubInfoScreen(
+                  widget._clubId,
+                  widget._profilePhoto,
+                  widget._name,
+                  widget._clubDescription,
+                  widget._clubCategory,
+                ),
+              ),
+              child: Container(
+                height: 55,
+                width: 55,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  color: Get.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  image: DecorationImage(
+                    image: NetworkImage(widget._profilePhoto),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            subtitle: Column(
+              children: [
+                SizedBox(height: 10),
+                Container(
+                  height: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          lastRoomMessageSenderId != kMyId
+                              ? lastRoomMessage
+                              : 'You: $lastRoomMessage',
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _convertedTime,
+                        style: kGrey11,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Divider(),
+        ],
+      ),
+    );
+  }
+}
+
+Widget userTile(
+  String _name,
+  _profilePhoto,
+  _userId,
+  _interestOne,
+  _interestTwo,
+) {
+  return Container(
+    child: Column(
+      children: [
+        ListTile(
+          onTap: () => Get.to(
+            UserScreen(_userId, _profilePhoto, _name),
+          ),
+          contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          title: Text(
+            _name,
+            style: TextStyle(
+              fontSize: 15,
+              color: Get.isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          leading: Hero(
+            tag: _userId,
+            child: Container(
+              height: 60,
+              width: 55,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(100),
+                color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
+                image: DecorationImage(
+                  image: NetworkImage(_profilePhoto),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          subtitle: Text(
+            'Likes $_interestOne, $_interestTwo',
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+            style: TextStyle(
+              color: Colors.grey,
+              // fontFamily: kDefaultFont,
+            ),
+          ),
+          trailing: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(100),
+              color: Colors.grey[200],
+            ),
+            child: colorRoundButton(
+              Icon(
+                CupertinoIcons.bubble_left_fill,
+                color: kPrimaryColor,
+              ),
+              () => Get.to(
+                MessagingScreen(_name, _profilePhoto, _userId),
+              ),
+            ),
+          ),
+        ),
+        // Divider(),
+      ],
+    ),
+  );
+}
+
+Widget groupTile(
+  String _name,
+  String _profilePhoto,
+  String _clubId,
+  String _clubCategory,
+  String _clubDescription,
+) {
+  return Container(
+    child: Column(
+      children: [
+        ListTile(
+          onTap: () => Get.to(
+            ClubInfoScreen(
+              _clubId,
+              _profilePhoto,
+              _name,
+              _clubDescription,
+              _clubCategory,
+            ),
+          ),
+          contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          title: Text(
+            _name,
+            style: TextStyle(
+              fontSize: 15,
+              color: Get.isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          leading: Hero(
+            tag: _clubId,
+            child: Container(
+              height: 60,
+              width: 55,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(100),
+                color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
+                image: DecorationImage(
+                  image: NetworkImage(_profilePhoto),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          subtitle: Text(
+            _clubCategory,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+            style: TextStyle(
+              color: Colors.grey,
+              // fontFamily: kDefaultFont,
+            ),
+          ),
+          trailing: Icon(
+            CupertinoIcons.chevron_forward,
+          ),
+          // trailing: Container(
+          //   decoration: BoxDecoration(
+          //     borderRadius: BorderRadius.circular(100),
+          //     color: Colors.grey[200],
+          //   ),
+          //   child: colorRoundButton(
+          //     Icon(
+          //       CupertinoIcons.bubble_left_fill,
+          //       color: kPrimaryColor,
+          //     ),
+          //     () => Get.to(
+          //       MessagingScreen(_name, _profilePhoto, _clubId),
+          //     ),
+          //   ),
+          // ),
         ),
         // Divider(),
       ],
@@ -424,48 +767,53 @@ Widget messageTile(String _name, _profilePhoto, _userId) {
 }
 
 Widget circleTile(String _name, _profilePhoto, _userId) {
-  return Container(
-    height: 70,
-    width: 70,
-    margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
-    child: Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: Colors.grey[200],
-                image: DecorationImage(
-                  image: NetworkImage(_profilePhoto),
-                  fit: BoxFit.cover,
+  return GestureDetector(
+    onTap: () => Get.to(
+      MessagingScreen(_name, _profilePhoto, _userId),
+    ),
+    child: Container(
+      height: 70,
+      width: 70,
+      margin: EdgeInsets.fromLTRB(10, 0, 0, 0),
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  color: Get.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  image: DecorationImage(
+                    image: NetworkImage(_profilePhoto),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              width: 10,
-              height: 10,
-              margin: EdgeInsets.only(left: 7),
-              decoration: BoxDecoration(
-                color: kAccentColor,
-                borderRadius: BorderRadius.circular(50),
+              Container(
+                width: 10,
+                height: 10,
+                margin: EdgeInsets.only(left: 7),
+                decoration: BoxDecoration(
+                  color: kAccentColor,
+                  borderRadius: BorderRadius.circular(50),
+                ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
+            ],
+          ),
+          SizedBox(height: 10),
 
-        Text(
-          _name,
-          overflow: TextOverflow.ellipsis,
-          softWrap: true,
-          style: kFont13,
-        ),
-        // ),
-        // Divider(),
-      ],
+          Text(
+            _name,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+            style: kFont13,
+          ),
+          // ),
+          // Divider(),
+        ],
+      ),
     ),
   );
 }
@@ -487,10 +835,15 @@ Widget gridCard(String _name, String _profilePhoto, String _userId) {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 35,
-          backgroundImage: NetworkImage(_profilePhoto),
-          backgroundColor: Colors.grey[200],
+        GestureDetector(
+          onTap: () => Get.to(
+            UserScreen(_userId, _profilePhoto, _name),
+          ),
+          child: CircleAvatar(
+            radius: 35,
+            backgroundImage: NetworkImage(_profilePhoto),
+            backgroundColor: Colors.grey[200],
+          ),
         ),
         SizedBox(height: 6),
         Text(
@@ -500,7 +853,7 @@ Widget gridCard(String _name, String _profilePhoto, String _userId) {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: 6),
-        squareButton(
+        defaultRoundButton(
           'Send message',
           () => Get.to(
             MessagingScreen(
@@ -515,53 +868,13 @@ Widget gridCard(String _name, String _profilePhoto, String _userId) {
   );
 }
 
-Widget clubGridCard(String _name, String _profilePhoto) {
-  // return Container(
-  //   height: 200,
-  //   width: 180,
-  //   margin: EdgeInsets.all(5),
-  //   padding: EdgeInsets.all(5),
-  //   // decoration: BoxDecoration(
-  //   //   color: !Get.isDarkMode
-  //   //       ? kPrimaryColor.withOpacity(0.15)
-  //   //       : Colors.transparent,
-  //   //   // border: Border.all(
-  //   //   //   color: Colors.grey[100],
-  //   //   //   width: 1,
-  //   //   // ),
-  //   //   borderRadius: BorderRadius.circular(10),
-  //   // ),
-  //   decoration: BoxDecoration(
-  //     color: !Get.isDarkMode ? Colors.grey[100] : kDarkBodyThemeBlack,
-  //     border: Border.all(
-  //       color: !Get.isDarkMode ? Colors.grey[200] : Colors.transparent,
-  //       width: 1,
-  //     ),
-  //     borderRadius: BorderRadius.circular(4),
-  //   ),
-  //   child: Column(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       CircleAvatar(
-  //         radius: 35,
-  //         backgroundImage: NetworkImage(_profilePhoto),
-  //         backgroundColor: Colors.grey[200],
-  //       ),
-  //       SizedBox(height: 6),
-  //       Text(
-  //         _name,
-  //         softWrap: false,
-  //         maxLines: 1,
-  //         overflow: TextOverflow.ellipsis,
-  //       ),
-  //       SizedBox(height: 6),
-  //       squareButton('Join club', () {}),
-  //     ],
-  //   ),
-  // );
-  //
-  //
-
+Widget clubGridCard(
+  String _name,
+  String _profilePhoto,
+  String _clubId,
+  String _clubDescription,
+  String _clubCategory,
+) {
   return Container(
     height: 200,
     width: 180,
@@ -578,10 +891,24 @@ Widget clubGridCard(String _name, String _profilePhoto) {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 35,
-          backgroundImage: NetworkImage(_profilePhoto),
-          backgroundColor: Colors.grey[200],
+        GestureDetector(
+          onTap: () => Get.to(
+            ClubInfoScreen(
+              _clubId,
+              _profilePhoto,
+              _name,
+              _clubDescription,
+              _clubCategory,
+            ),
+          ),
+          child: Hero(
+            tag: _clubId,
+            child: CircleAvatar(
+              radius: 35,
+              backgroundImage: NetworkImage(_profilePhoto),
+              backgroundColor: Colors.grey[200],
+            ),
+          ),
         ),
         SizedBox(height: 6),
         Text(
@@ -591,16 +918,17 @@ Widget clubGridCard(String _name, String _profilePhoto) {
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: 6),
-        squareButton(
-          'Join club',
-          () {},
-        ),
+        Text('200 members'),
+        // defaultRoundButton(
+        //   'Join club',
+        //   () {},
+        // ),
       ],
     ),
   );
 }
 
-Widget squareButton(String _btnText, Function _func) {
+Widget defaultRoundButton(String _btnText, Function _func) {
   return Container(
     height: 33,
     // width: 90,
@@ -620,48 +948,97 @@ Widget squareButton(String _btnText, Function _func) {
   );
 }
 
-Widget searchBox() {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 15),
-    // height: 40,
-    child: TextFormField(
-      onChanged: (value) {
-        // kGetController.queryText.value = value;
-
-        // if (value != '') {
-        //   kGetController.hasInitSearch.value = true;
-        //   kGetController.update();
-        // } else {
-        //   kGetController.hasInitSearch.value = false;
-        //   kGetController.update();
-        // }
-      },
-      decoration: InputDecoration(
-        suffixIcon: Icon(
-          CupertinoIcons.search,
-          color: Colors.grey[400],
-          size: 19,
+Widget textIconRoundButton(Icon _icon, String _btnText, Function _func) {
+  return GestureDetector(
+    onTap: _func,
+    child: Container(
+      height: 33,
+      // width: 90,
+      child: MaterialButton(
+        elevation: 0,
+        color: !Get.isDarkMode ? kPrimaryColor.withOpacity(0.2) : Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide.none,
+          borderRadius: BorderRadius.circular(40),
         ),
-        contentPadding: EdgeInsets.all(10),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            width: 0.8,
-            color: Colors.grey[200],
-          ),
-          borderRadius: BorderRadius.circular(100),
+        onPressed: _func,
+        child: Row(
+          children: [
+            _icon,
+            SizedBox(width: 10),
+            Text(
+              _btnText,
+              style: TextStyle(color: kPrimaryColor),
+            ),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            width: 0.8,
-            color: Colors.grey[200],
-          ),
-          borderRadius: BorderRadius.circular(100),
-        ),
-        filled: true,
-        fillColor: Colors.grey[100],
-        hintText: 'Search for chats',
-        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
       ),
+    ),
+  );
+}
+
+Widget colorRoundButton(Icon _icon, Function _pressed) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(100),
+      color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
+    ),
+    child: IconButton(
+      icon: _icon,
+      onPressed: _pressed,
+    ),
+  );
+}
+
+Widget fakeSearchBox() {
+  return GestureDetector(
+    onTap: () => Get.to(SearchScreen()),
+    child: Container(
+      height: 34,
+      decoration: BoxDecoration(
+        color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
+        // border: Border.all(
+        //   color: Colors.grey[200],
+        //   width: 1,
+        // ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.search,
+              color: Colors.grey[400],
+              size: 19,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Search',
+              style: kGrey14,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget bottomNavIconTextLabel(String _text, Icon _icon) {
+  return Container(
+    margin: EdgeInsets.only(top: 10),
+    // height: 55,
+    child: Column(
+      children: [
+        _icon,
+        Text(
+          _text,
+          style: TextStyle(
+            fontSize: 11,
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -669,24 +1046,26 @@ Widget searchBox() {
 class MessageItem extends StatefulWidget {
   final _messageText;
   final _messageTimeStamp;
-  final String _senderName;
   final String _senderId;
+  final String _senderName;
   final String _senderProfileImage;
   final String _messageImage;
   final String _messageType;
   final String _messageId;
   final String _roomId;
+  final bool _isClub;
 
   MessageItem(
     this._messageText,
     this._messageTimeStamp,
-    this._senderName,
     this._senderId,
+    this._senderName,
     this._senderProfileImage,
     this._messageImage,
     this._messageType,
     this._messageId,
     this._roomId,
+    this._isClub,
   );
 
   @override
@@ -694,6 +1073,92 @@ class MessageItem extends StatefulWidget {
 }
 
 class _MessageItemState extends State<MessageItem> {
+  showMessageItemSheet() {
+    Get.bottomSheet(
+      Container(
+        // height: 140,
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(14),
+            topRight: Radius.circular(14),
+          ),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: 20),
+            widget._senderId == kMyId
+                ? bottomSheetItem(
+                    Icon(CupertinoIcons.delete, color: kPrimaryColor),
+                    'Delete message',
+                    () {
+                      final roomMessagesRef = kChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
+
+                      final clubRoomMessagesRef = kClubChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
+
+                      if (widget._senderId == kMyId)
+                        !widget._isClub
+                            ? roomMessagesRef.doc(widget._messageId).delete()
+                            : clubRoomMessagesRef
+                                .doc(widget._messageId)
+                                .delete();
+
+                      Get.back();
+                    },
+                  )
+                : Container(),
+            SizedBox(height: 20),
+            widget._messageImage != null
+                ? bottomSheetItem(
+                    Icon(Icons.download_outlined, color: kPrimaryColor),
+                    'Download photo',
+                    () {
+                      final roomMessagesRef = kChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
+
+                      if (widget._senderId == kMyId)
+                        roomMessagesRef.doc(widget._messageId).delete();
+
+                      Get.back();
+                    },
+                  )
+                : Container(),
+            SizedBox(height: 20),
+            widget._messageText != null ||
+                    widget._messageText == '' && widget._messageImage == null
+                ? bottomSheetItem(
+                    Icon(Icons.copy, color: kPrimaryColor),
+                    'Copy message text',
+                    () {
+                      final roomMessagesRef = kChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
+
+                      if (widget._senderId == kMyId)
+                        roomMessagesRef.doc(widget._messageId).delete();
+
+                      Get.back();
+                    },
+                  )
+                : Container(),
+            SizedBox(height: 20),
+            bottomSheetItem(
+              Icon(Icons.forward, color: kPrimaryColor),
+              'Forward...',
+              () {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime myDateTime = widget._messageTimeStamp.toDate();
@@ -702,6 +1167,7 @@ class _MessageItemState extends State<MessageItem> {
 
     return GestureDetector(
       onTap: () => print('show delete dilogue or smn'),
+      onLongPress: () => showMessageItemSheet(),
       child: Column(
         crossAxisAlignment:
             myMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -712,55 +1178,53 @@ class _MessageItemState extends State<MessageItem> {
                 myMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
             children: [
               !myMessage
-                  ? GestureDetector(
-                      // onTap: () => Get.to(
-                      //   OtherUserScreen(widget._senderId, widget._senderName),
-                      // ),
-                      child: CircleAvatar(
-                        radius: 13,
-                        backgroundColor: Colors.grey[100],
-                        backgroundImage:
-                            NetworkImage(widget._senderProfileImage),
-                      ),
+                  ? CircleAvatar(
+                      radius: 13,
+                      backgroundColor: Colors.grey[100],
+                      backgroundImage: NetworkImage(widget._senderProfileImage),
                     )
                   : Container(),
               SizedBox(width: 10),
               widget._messageText == null || widget._messageText == ''
+                  // widget._messageText == 'Sent a photo'
                   ? Container()
-                  : GestureDetector(
-                      onDoubleTap: () {
-                        final roomMessagesRef = kChatRoomsRef
-                            .doc(widget._roomId)
-                            .collection('RoomMessages');
-
-                        if (widget._senderId == kMyId)
-                          roomMessagesRef.doc(widget._messageId).delete();
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: myMessage ? kPrimaryColor : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(11),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: myMessage ? kPrimaryColor : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                          constraints: BoxConstraints(
+                            maxWidth:
+                                MediaQuery.of(context).size.width / 2 + 100,
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 14,
+                          ),
+                          child: Text(
+                            widget._messageText,
+                            style: TextStyle(
+                              color: myMessage ? Colors.white : Colors.black,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width / 2 + 100,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 14,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        SizedBox(height: 10),
+                        Row(
                           children: [
                             Text(
-                              widget._messageText,
+                              widget._senderName == kMyName
+                                  ? ''
+                                  : widget._senderName,
                               style: TextStyle(
-                                // color: Colors.black,
-                                color: myMessage ? Colors.white : Colors.black,
-                                // color: Get.isDarkMode ? Colors.white : Colors.black,
-                                fontSize: 15,
+                                fontSize: 12,
+                                color: Colors.grey[400],
                               ),
                             ),
-                            SizedBox(height: 10),
+                            SizedBox(width: 7),
                             Text(
                               dateString,
                               style: TextStyle(
@@ -768,34 +1232,22 @@ class _MessageItemState extends State<MessageItem> {
                                 color: Colors.grey[400],
                               ),
                             ),
-                            // !myMessage
-                            //     ? Text(
-                            //         dateString,
-                            //         style: TextStyle(
-                            //           fontSize: 12,
-                            //           color: Colors.grey[400],
-                            //         ),
-                            //       )
-                            //     : Container(width: 0, height: 0),
                           ],
                         ),
-                      ),
+                      ],
                     ),
             ],
           ),
           widget._messageType == 'photoMessage' && widget._messageImage != null
-              ? GestureDetector(
-                  onTap: () => Get.to(
-                    ViewPhotoScreen(widget._messageImage),
+              ? Container(
+                  padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                  margin: EdgeInsets.only(top: 10),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width / 2 + 100,
                   ),
-                  // onLongPress: () => Get.to(
-                  //   () => ViewPhotoScreen(widget._postImage),
-                  // ),
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(0, 15, 0, 0),
-                    margin: EdgeInsets.only(top: 10),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width / 2 + 100,
+                  child: GestureDetector(
+                    onTap: () => Get.to(
+                      ViewPhotoScreen(widget._messageImage),
                     ),
                     child: ExtendedImage.network(
                       widget._messageImage,
@@ -829,28 +1281,6 @@ class _MessageItemState extends State<MessageItem> {
                   ),
                 )
               : Container(),
-          // SizedBox(height: 10),
-          // myMessage
-          //     ? Text(
-          //         dateString,
-          //         style: TextStyle(
-          //           fontSize: 12,
-          //           color: Colors.grey[400],
-          //         ),
-          //       )
-          //     : SizedBox.shrink(),
-          // !myMessage
-          //     ? Container(
-          //         margin: EdgeInsets.only(left: 40),
-          //         child: Text(
-          //           '${widget._senderName} $dateString',
-          //           style: TextStyle(
-          //             fontSize: 12,
-          //             color: Colors.grey[400],
-          //           ),
-          //         ),
-          //       )
-          //     : SizedBox.shrink(),
           SizedBox(height: 15),
         ],
       ),
@@ -913,10 +1343,29 @@ Widget fillInCircleTile() {
 Widget fillInMessageTile() {
   return Container(
     height: 150,
-    child: messageTile(
+    child: MessageTile(
       kMyName,
       kMyProfileImage,
       kMyId,
+    ),
+  );
+}
+
+Widget clubInfoButton(String _text, Icon _icon, Function _func) {
+  return Container(
+    margin: EdgeInsets.only(bottom: 10),
+    color: Get.isDarkMode ? Colors.grey[900] : Colors.grey[100],
+    padding: EdgeInsets.all(10),
+    child: GestureDetector(
+      onTap: _func,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _icon,
+          SizedBox(width: 5),
+          Text(_text),
+        ],
+      ),
     ),
   );
 }

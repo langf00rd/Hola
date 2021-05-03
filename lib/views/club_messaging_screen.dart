@@ -5,62 +5,51 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
+import 'package:reflex/views/club_info.dart';
 import 'package:reflex/views/share_photo_screen.dart';
-import 'package:reflex/views/user.dart';
 import 'package:reflex/widgets/widget.dart';
-// import 'package:audioplayers/audioplayers.dart';
 
-class MessagingScreen extends StatefulWidget {
-  final String _name;
-  final String _profilePhoto;
-  final String _userId;
-  MessagingScreen(this._name, this._profilePhoto, this._userId);
+class ClubMessagingScreen extends StatefulWidget {
+  final String _clubId;
+  final String _clubProfileImage;
+  final String _clubName;
+  final String _clubDescription;
+  final String _clubCategory;
+
+  ClubMessagingScreen(
+    this._clubId,
+    this._clubProfileImage,
+    this._clubName,
+    this._clubDescription,
+    this._clubCategory,
+  );
 
   @override
-  _MessagingScreenState createState() => _MessagingScreenState();
+  _ClubMessagingScreenState createState() => _ClubMessagingScreenState();
 }
 
-class _MessagingScreenState extends State<MessagingScreen> {
-  String _roomId = '';
+class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
   TextEditingController _textController = TextEditingController();
   final _controller = ScrollController();
-
-  // final AudioCache player = AudioCache();
-  // final alarmAudioPath = "messageSent.mp3";
+  int _membersNum = 0;
 
   playMessageSentTone() {
-    // player.play(alarmAudioPath);
-    //
-    //
-    //  AudioCache cache = new AudioCache();
-    //At the next line, DO NOT pass the entire reference such as assets/yes.mp3. This will not work.
-    //Just pass the file name only.
-    //  cache.play("messageSent.mp3");
-    //
-    //
-    //
+    print('sent');
   }
 
-  Future checkRoomExist() async {
-    try {
-      setState(() {
-        _roomId = getRoomId(widget._userId);
-      });
-
-      DocumentReference roomsRef = kChatRoomsRef.doc(_roomId);
-
-      await roomsRef.get().then(
-        (doc) {
-          if (!doc.exists) {
-            createRoom(_roomId, widget._userId);
-            updateUserChatHistoryMembers(widget._userId);
-            updateRoomUserToken(_roomId);
-          }
-        },
-      );
-    } catch (e) {
-      singleButtonDialogue('Sorry, an unexpected error occured');
-    }
+  _getMembersNum() async {
+    await kClubsRef
+        .doc(widget._clubId)
+        .collection('Members')
+        .where('joinState', isEqualTo: 'Joined')
+        .get()
+        .then((myDocuments) {
+      if (mounted) {
+        setState(() {
+          _membersNum = myDocuments.docs.length;
+        });
+      }
+    });
   }
 
   plusButtonSheet() {
@@ -82,9 +71,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
               'Share photo / Camera',
               () => Get.to(
                 SharePhotoScreen(
-                  _roomId,
-                  widget._name,
-                  false,
+                  widget._clubId,
+                  widget._clubName,
+                  true,
                 ),
               ),
             ),
@@ -118,20 +107,18 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   void dispose() {
     _textController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    checkRoomExist();
-    _roomId = getRoomId(widget._userId);
-    updateLastRoomVisitTime(_roomId);
+    _getMembersNum();
+    updateClubLastRoomVisitTime(widget._clubId);
 
     messagesStreamBuilder = StreamBuilder<QuerySnapshot>(
-      stream: kChatRoomsRef
-          .doc(_roomId)
+      stream: kClubChatRoomsRef
+          .doc(widget._clubId)
           .collection('RoomMessages')
           .orderBy('sendTime')
           .snapshots(),
@@ -200,8 +187,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
                     snapshot.data.docs[index]['messageImage'],
                     snapshot.data.docs[index]['messageType'],
                     snapshot.data.docs[index].id,
-                    _roomId,
-                    false,
+                    widget._clubId,
+                    true,
                   )
                 : Container();
           },
@@ -224,24 +211,25 @@ class _MessagingScreenState extends State<MessagingScreen> {
               title: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => widget._userId != kMyId
-                        ? Get.to(
-                            UserScreen(
-                              widget._userId,
-                              widget._profilePhoto,
-                              widget._name,
-                            ),
-                          )
-                        : () {},
+                    onTap: () => Get.to(
+                      ClubInfoScreen(
+                        widget._clubId,
+                        widget._clubProfileImage,
+                        widget._clubName,
+                        widget._clubDescription,
+                        widget._clubCategory,
+                      ),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
                       child: Hero(
-                        tag: widget._userId,
+                        tag: widget._clubId,
                         child: CircleAvatar(
                           backgroundColor: Get.isDarkMode
                               ? Colors.grey[800]
                               : Colors.grey[200],
-                          backgroundImage: NetworkImage(widget._profilePhoto),
+                          backgroundImage:
+                              NetworkImage(widget._clubProfileImage),
                         ),
                       ),
                     ),
@@ -252,7 +240,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget._name,
+                          widget._clubName,
                           overflow: TextOverflow.ellipsis,
                           softWrap: true,
                           style: TextStyle(
@@ -261,7 +249,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
                           ),
                         ),
                         Text(
-                          'Last seen 12hrs ago',
+                          _membersNum > 1
+                              ? '$_membersNum members'
+                              : '$_membersNum member',
                           overflow: TextOverflow.ellipsis,
                           softWrap: true,
                           style: TextStyle(
@@ -281,18 +271,11 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   color: kPrimaryColor,
                 ),
                 onPressed: () {
-                  updateLastRoomVisitTime(_roomId);
+                  updateLastRoomVisitTime(widget._clubId);
                   Get.back();
                 },
               ),
               actions: [
-                IconButton(
-                  icon: Icon(
-                    CupertinoIcons.phone_fill,
-                    color: kPrimaryColor,
-                  ),
-                  onPressed: () {},
-                ),
                 IconButton(
                   icon: Icon(
                     Icons.more_vert,
@@ -375,10 +358,10 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       child: IconButton(
                         onPressed: () {
                           if (_textController.text.trim() != '') {
-                            sendMessage(
-                              _roomId,
+                            sendClubMessage(
+                              widget._clubId,
                               _textController.text.trim(),
-                            ).then((value) => playMessageSentTone());
+                            );
 
                             _textController.text = '';
                           } else

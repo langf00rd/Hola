@@ -12,9 +12,12 @@ import 'package:reflex/widgets/widget.dart';
 class SharePhotoScreen extends StatefulWidget {
   final String _roomId;
   final String _name;
+  final bool _isClub;
+
   SharePhotoScreen(
     this._roomId,
     this._name,
+    this._isClub,
   );
 
   @override
@@ -62,10 +65,37 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
         String url = await taskSnapshot.ref.getDownloadURL();
 
         await sendPhoto(
-          _photoDescriptionController.text.trim(),
+          _photoDescriptionController.text,
           url,
           widget._roomId,
+          widget._isClub,
         );
+
+        if (_photoDescriptionController.text.isEmpty)
+          widget._isClub
+              ? await kClubChatRoomsRef.doc(widget._roomId).update({
+                  'lastRoomMessageTime': DateTime.now(),
+                  'lastRoomMessage': 'Sent a photo',
+                  'lastRoomMessageSenderId': kMyId,
+                })
+              : await kChatRoomsRef.doc(widget._roomId).update({
+                  'lastRoomMessageTime': DateTime.now(),
+                  'lastRoomMessage': 'Sent a photo',
+                  'lastRoomMessageSenderId': kMyId,
+                });
+
+        if (_photoDescriptionController.text.isNotEmpty)
+          widget._isClub
+              ? await kClubChatRoomsRef.doc(widget._roomId).update({
+                  'lastRoomMessageTime': DateTime.now(),
+                  'lastRoomMessage': _photoDescriptionController.text,
+                  'lastRoomMessageSenderId': kMyId,
+                })
+              : await kChatRoomsRef.doc(widget._roomId).update({
+                  'lastRoomMessageTime': DateTime.now(),
+                  'lastRoomMessage': _photoDescriptionController.text,
+                  'lastRoomMessageSenderId': kMyId,
+                });
 
         Get.back();
       }

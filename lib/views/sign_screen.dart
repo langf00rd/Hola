@@ -24,13 +24,17 @@ class _SignScreenState extends State<SignScreen> {
       await usersRef.get().then((doc) async {
         String _interestOne = doc.data()['interestOne'].toString();
         String _interestTwo = doc.data()['interestTwo'].toString();
+        String _interestThree = doc.data()['interestThree'].toString();
         String _profileImg = doc.data()['profileImage'];
+        String _about = doc.data()['aboutUser'];
 
         kGetStorage.write('myInterestOne', _interestOne);
         kGetStorage.write('myInterestTwo', _interestTwo);
+        kGetStorage.write('myInterestThree', _interestThree);
         kGetStorage.write('myProfilePicture', _profileImg);
         kGetStorage.write('myName', resultUser.displayName);
         kGetStorage.write('myId', resultUser.uid);
+        kGetStorage.write('myAbout', _about);
 
         Get.offAll(() => HomeInit());
       });

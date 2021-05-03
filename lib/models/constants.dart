@@ -4,11 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:reflex/views/my.dart';
 
-Color kPrimaryColor = Colors.blueAccent;
+Color kPrimaryColor = Colors.blueAccent[400];
 Color kAccentColor = Colors.lightGreenAccent;
-Color kDarkThemeBlack = Colors.grey[900];
-Color kDarkBodyThemeBlack = Colors.grey[800];
+Color kDarkThemeBlack = Colors.black;
+Color kDarkBodyThemeBlack = Colors.grey[900];
 
 final kDefaultFontBold = 'primaryBold';
 final kDefaultFont = 'primaryFont';
@@ -19,12 +20,17 @@ final kMyProfileImage = kGetStorage.read('myProfilePicture');
 final kMyId = kGetStorage.read('myId');
 final kInterestOne = kGetStorage.read('myInterestOne');
 final kInterestTwo = kGetStorage.read('myInterestTwo');
+final kMyAbout = kGetStorage.read('myAbout');
+final kMyNotificationToken = kGetStorage.read('myNotificationToken');
 
 final kFirestoreInstance = FirebaseFirestore.instance;
 final kFirebaseAuthInstance = FirebaseAuth.instance;
 final kUsersRef = kFirestoreInstance.collection('Users');
 final kChatRoomsRef = kFirestoreInstance.collection('ChatRooms');
+final kClubChatRoomsRef = kFirestoreInstance.collection('ClubChatRooms');
 final kClubsRef = kFirestoreInstance.collection('Clubs');
+final kInterestSharingPeopleRef =
+    kUsersRef.where("interests", arrayContains: kInterestTwo);
 
 final String kTemporalImageUrl =
     'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png';
@@ -34,6 +40,24 @@ BoxDecoration kContainerBorderDecoration = BoxDecoration(
   border: Border.all(
     color: Get.isDarkMode ? Colors.transparent : Colors.grey[200],
     width: 1,
+  ),
+);
+
+GestureDetector appBarCircleAvatar = GestureDetector(
+  onTap: () => Get.to(Me()),
+  child: Container(
+    padding: EdgeInsets.all(5),
+    child: kMyProfileImage == null
+        ? CircleAvatar(
+            backgroundColor:
+                Get.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+            backgroundImage: AssetImage('assets/temporalPhoto.png'),
+          )
+        : CircleAvatar(
+            backgroundColor:
+                Get.isDarkMode ? Colors.grey[800] : Colors.grey[100],
+            backgroundImage: NetworkImage(kMyProfileImage),
+          ),
   ),
 );
 
@@ -53,6 +77,12 @@ TextStyle kGrey11 = TextStyle(
 TextStyle kGrey13 = TextStyle(
   fontSize: 13,
   color: Colors.grey,
+  // fontFamily: kDefaultFont,
+);
+
+TextStyle kGrey14 = TextStyle(
+  fontSize: 14,
+  color: Colors.grey[400],
   // fontFamily: kDefaultFont,
 );
 
