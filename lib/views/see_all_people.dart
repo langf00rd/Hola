@@ -84,6 +84,7 @@ class _SeeAllPeopleState extends State<SeeAllPeople> {
                             snapshot.data.docs[index]['userId'],
                             snapshot.data.docs[index]['interestOne'],
                             snapshot.data.docs[index]['interestTwo'],
+                            snapshot.data.docs[index]['interestThree'],
                           )
                         : Container();
                   },

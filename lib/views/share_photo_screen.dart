@@ -108,7 +108,9 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
         });
       }
 
-      singleButtonDialogue('Sorry, an unexpected error occured');
+      print(e);
+
+      singleButtonDialogue('can not send');
     }
   }
 
@@ -129,38 +131,28 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          leading: !loading
-              ? IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Get.back(),
-                )
-              : SizedBox.shrink(),
+          leading: IconButton(
+            icon: Icon(
+              Icons.close,
+              color: Colors.white,
+            ),
+            onPressed: () => Get.back(),
+          ),
           actions: [
-            !loading
-                ? IconButton(
-                    icon: Icon(
-                      CupertinoIcons.photo,
-                      color: Colors.white,
-                    ),
-                    onPressed: () => pickImage(ImageSource.gallery),
-                  )
-                : Container(
-                    width: 50,
-                  ),
-            !loading
-                ? IconButton(
-                    icon: Icon(
-                      LineIcons.camera,
-                      color: Colors.white,
-                    ),
-                    onPressed: () => pickImage(ImageSource.camera),
-                  )
-                : Container(
-                    width: 50,
-                  ),
+            IconButton(
+              icon: Icon(
+                CupertinoIcons.photo,
+                color: Colors.white,
+              ),
+              onPressed: () => pickImage(ImageSource.gallery),
+            ),
+            IconButton(
+              icon: Icon(
+                LineIcons.camera,
+                color: Colors.white,
+              ),
+              onPressed: () => pickImage(ImageSource.camera),
+            ),
             _imageFile != null && !loading
                 ? Container(
                     height: 60,

@@ -19,6 +19,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15),
       child: TextFormField(
+        autofocus: true,
         onChanged: (value) {
           setState(() {
             _searchController.text = value;
@@ -32,11 +33,65 @@ class _SearchScreenState extends State<SearchScreen> {
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide.none,
           ),
-          hintText: 'Search for people, groups ...',
+          hintText: 'Search for chats, people, groups',
           hintStyle: TextStyle(fontSize: 15, color: Colors.grey),
         ),
       ),
     );
+  }
+
+  Widget _myMessagesTab() {
+    return _searchController.value.text.isNotEmpty
+        ? StreamBuilder<QuerySnapshot>(
+            stream: kChatRoomsRef
+                .where('roomUsers', arrayContains: kMyId)
+                .snapshots(),
+            builder:
+                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Error fetching chats...',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: myLoader());
+              }
+
+              if (!snapshot.hasData) return Text('');
+
+              if (snapshot.data.docs.length == 0) {
+                return noDataSnapshotMessage(
+                  'Oops! No results',
+                  Text(
+                    'You have no conversations with that name.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                );
+              }
+
+              return Container(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height - 200,
+                padding: EdgeInsets.only(top: 20),
+                child: ListView.builder(
+                  itemCount: snapshot.data.docs.length,
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    return RoomChatItem(snapshot.data.docs[index]['roomUsers']);
+                  },
+                ),
+              );
+            },
+          )
+        : Container();
   }
 
   Widget _peopleTab() {
@@ -90,6 +145,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             snapshot.data.docs[index]['userId'],
                             snapshot.data.docs[index]['interestOne'],
                             snapshot.data.docs[index]['interestTwo'],
+                            snapshot.data.docs[index]['interestThree'],
                           )
                         : SizedBox.shrink();
                   },
@@ -165,7 +221,7 @@ class _SearchScreenState extends State<SearchScreen> {
       color: Colors.black,
       child: SafeArea(
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: Scaffold(
             backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
             appBar: AppBar(
@@ -185,8 +241,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: Container(
                         child: myTabBar(
                           [
+                            textTabLabel('Chats'),
                             textTabLabel('People'),
-                            textTabLabel('Open groups'),
+                            textTabLabel('Groups'),
                           ],
                           _controller,
                         ),
@@ -199,6 +256,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             body: TabBarView(
               children: [
+                _myMessagesTab(),
                 _peopleTab(),
                 _groupsTab(),
               ],

@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:reflex/views/my.dart';
 
-Color kPrimaryColor = Colors.blueAccent[400];
+Color kPrimaryColor = kGetStorage.read('myThemeColor') != null
+    ? kGetStorage.read('myThemeColor')
+    : Colors.blueAccent[400];
 Color kAccentColor = Colors.lightGreenAccent;
 Color kDarkThemeBlack = Colors.black;
 Color kDarkBodyThemeBlack = Colors.grey[900];
@@ -20,6 +22,7 @@ final kMyProfileImage = kGetStorage.read('myProfilePicture');
 final kMyId = kGetStorage.read('myId');
 final kInterestOne = kGetStorage.read('myInterestOne');
 final kInterestTwo = kGetStorage.read('myInterestTwo');
+final kInterestThree = kGetStorage.read('myInterestThree');
 final kMyAbout = kGetStorage.read('myAbout');
 final kMyNotificationToken = kGetStorage.read('myNotificationToken');
 
@@ -30,7 +33,7 @@ final kChatRoomsRef = kFirestoreInstance.collection('ChatRooms');
 final kClubChatRoomsRef = kFirestoreInstance.collection('ClubChatRooms');
 final kClubsRef = kFirestoreInstance.collection('Clubs');
 final kInterestSharingPeopleRef =
-    kUsersRef.where("interests", arrayContains: kInterestTwo);
+    kUsersRef.where("interests", arrayContains: kInterestOne);
 
 final String kTemporalImageUrl =
     'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png';
@@ -44,7 +47,7 @@ BoxDecoration kContainerBorderDecoration = BoxDecoration(
 );
 
 GestureDetector appBarCircleAvatar = GestureDetector(
-  onTap: () => Get.to(Me()),
+  onTap: () => Get.to(My()),
   child: Container(
     padding: EdgeInsets.all(5),
     child: kMyProfileImage == null

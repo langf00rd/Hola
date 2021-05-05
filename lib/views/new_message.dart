@@ -185,6 +185,8 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                                                   ['interestOne'],
                                               snapshot.data.docs[index]
                                                   ['interestTwo'],
+                                              snapshot.data.docs[index]
+                                                  ['interestThree'],
                                             )
                                           : SizedBox.shrink();
                                     },
@@ -195,12 +197,7 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                           ],
                         )
                       : StreamBuilder<QuerySnapshot>(
-                          stream: kInterestSharingPeopleRef
-                              .where("name",
-                                  isGreaterThanOrEqualTo:
-                                      _searchController.text.capitalize)
-                              .where('name', isNotEqualTo: kMyName)
-                              .snapshots(),
+                          stream: kUsersRef.snapshots(),
                           builder: (BuildContext context,
                               AsyncSnapshot<QuerySnapshot> snapshot) {
                             if (snapshot.hasError) {
@@ -233,12 +230,13 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                               children: [
                                 Container(
                                   padding: EdgeInsets.all(10),
+                                  margin: EdgeInsets.only(top: 10),
                                   child: Text(
                                     'Suggested people',
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Get.isDarkMode
-                                          ? Colors.white
+                                          ? Colors.grey
                                           : Colors.grey,
                                     ),
                                   ),
@@ -264,6 +262,8 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                                                   ['interestOne'],
                                               snapshot.data.docs[index]
                                                   ['interestTwo'],
+                                              snapshot.data.docs[index]
+                                                  ['interestThree'],
                                             )
                                           : SizedBox.shrink();
                                     },

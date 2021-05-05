@@ -90,7 +90,6 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
             if (mounted) {
               setState(() {
                 _joinState = 'Joined';
-
                 loading = false;
               });
             }
@@ -331,9 +330,7 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                                     () {},
                                   )
                                 : Text(''),
-                            _clubAdminId != kMyId &&
-                                    _joinState != null &&
-                                    _joinState == null
+                            _clubAdminId != kMyId && _joinState == null
                                 ? clubInfoButton(
                                     'Join club',
                                     Icon(
@@ -351,9 +348,26 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                                     Icon(
                                       CupertinoIcons.xmark,
                                       color: kPrimaryColor,
-                                    ),
-                                    () {},
-                                  )
+                                    ), () {
+                                    if (mounted) {
+                                      setState(() {
+                                        loading = true;
+                                      });
+                                    }
+                                    leaveClub(widget._clubId).then((value) {
+                                      _initGetJoinState();
+                                      _getMembersNum();
+
+                                      singleButtonDialogue(
+                                          'You left ${widget._clubName}');
+
+                                      if (mounted) {
+                                        setState(() {
+                                          loading = false;
+                                        });
+                                      }
+                                    });
+                                  })
                                 : Text(''),
                             _joinState != null && _joinState == 'Joined'
                                 ? clubInfoButton(

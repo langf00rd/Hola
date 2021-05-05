@@ -2,19 +2,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
+import 'package:reflex/services/services.dart';
 import 'package:reflex/views/customize_screen.dart';
 import 'package:reflex/views/edit_profile.dart';
 import 'package:reflex/views/search_screen.dart';
+import 'package:reflex/views/sign_screen.dart';
 import 'package:reflex/views/start_club.dart';
-import 'package:reflex/views/view_photo_screen.dart';
 import 'package:reflex/widgets/widget.dart';
 
-class Me extends StatefulWidget {
+class My extends StatefulWidget {
   @override
-  _MeState createState() => _MeState();
+  _MyState createState() => _MyState();
 }
 
-class _MeState extends State<Me> {
+class _MyState extends State<My> {
   bool _themeSwitchValue = kGetStorage.read('isDarkTheme');
 
   void changeAppTheme(bool _themeBool) async {
@@ -23,6 +24,12 @@ class _MeState extends State<Me> {
         _themeSwitchValue = !_themeSwitchValue;
       });
     }
+
+    Get.isDarkMode
+        ? Get.changeTheme(ThemeData.light())
+        : Get.changeTheme(ThemeData.dark());
+    setState(() {});
+
     kGetStorage.remove('isDarkTheme');
     kGetStorage.write('isDarkTheme', _themeSwitchValue);
     setState(() {});
@@ -185,7 +192,6 @@ class _MeState extends State<Me> {
                           'New conversation',
                           Icon(
                             CupertinoIcons.plus_bubble,
-                            // color: Colors.black,
                           ), () {
                         Get.to(
                           CustomizeScreen(),
@@ -195,7 +201,6 @@ class _MeState extends State<Me> {
                           'Share an update',
                           Icon(
                             CupertinoIcons.timer,
-                            // color: Colors.black,
                           ), () {
                         Get.to(
                           CustomizeScreen(),
@@ -205,19 +210,20 @@ class _MeState extends State<Me> {
                           'Logout',
                           Icon(
                             Icons.logout,
-                            // color: Colors.black,
                           ), () {
-                        Get.to(
-                          CustomizeScreen(),
-                        );
+                        removeAllStorageVariables();
+                        signOut();
+                        Get.offAll(SignScreen());
                       }),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           sideDrawerItem(
-                            'Dark Mode',
+                            Get.isDarkMode ? 'Light Mode' : 'Dark theme',
                             Icon(
-                              CupertinoIcons.moon_fill,
+                              Get.isDarkMode
+                                  ? CupertinoIcons.sun_max
+                                  : CupertinoIcons.moon,
                             ),
                             () {},
                           ),

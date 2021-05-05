@@ -1,3 +1,4 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -60,29 +61,63 @@ class _ViewPhotoScreenState extends State<ViewPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.download_sharp, color: Colors.white),
+        backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.download_sharp, color: Colors.white),
+              onPressed: () {
+                downloadImage();
+              },
+            ),
+          ],
+          leading: IconButton(
+            icon: Icon(Icons.close, color: Colors.white),
             onPressed: () {
-              downloadImage();
+              Get.back();
             },
           ),
-        ],
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.white),
-          onPressed: () {
-            Get.back();
-          },
         ),
-      ),
-      body: Container(
-        child: Center(
-          child: Image.network(widget._src),
-        ),
-      ),
-    );
+        body: Container(
+          width: MediaQuery.of(context).size.width,
+          child: Center(
+            child: ExtendedImage.network(
+              widget._src,
+              fit: BoxFit.contain,
+              enableLoadState: false,
+              mode: ExtendedImageMode.gesture,
+              initGestureConfigHandler: (state) {
+                return GestureConfig(
+                  minScale: 0.9,
+                  animationMinScale: 0.7,
+                  maxScale: 3.0,
+                  animationMaxScale: 3.5,
+                  speed: 1.0,
+                  inertialSpeed: 100.0,
+                  initialScale: 1.0,
+                  inPageView: true,
+                  initialAlignment: InitialAlignment.center,
+                );
+              },
+            ),
+          ),
+        )
+        // body: ExtendedImage.network(
+        //   widget._src,
+        //   fit: BoxFit.contain,
+        //   mode: ExtendedImageMode.editor,
+        //   // extendedImageEditorKey: editorKey,
+        //   initEditorConfigHandler: (state) {
+        //     return EditorConfig(
+        //       maxScale: 8.0,
+        //       cropRectPadding: EdgeInsets.all(20.0),
+        //       hitTestSize: 20.0,
+        //       cropAspectRatio: CropAspectRatios.original,
+        //     );
+        //   },
+        // ),
+        );
   }
 }

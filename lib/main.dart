@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:reflex/models/constants.dart';
-import 'package:reflex/views/home_init.dart';
+import 'package:reflex/views/home_screen.dart';
 import 'package:reflex/views/sign_screen.dart';
 
 Future<void> main() async {
@@ -12,11 +12,11 @@ Future<void> main() async {
   await Firebase.initializeApp();
   await GetStorage.init();
 
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
-      statusBarColor: Colors.black,
-    ),
-  );
+  // SystemChrome.setSystemUIOverlayStyle(
+  //   SystemUiOverlayStyle(
+  //     statusBarColor: Colors.black,
+  //   ),
+  // );
 
   runApp(MyApp());
 }
@@ -55,7 +55,7 @@ class _MyAppState extends State<MyApp> {
       title: 'Hola free messenger',
       debugShowCheckedModeBanner: false,
       defaultTransition: Transition.rightToLeft,
-      home: kGetStorage.read('myId') != null ? HomeInit() : SignScreen(),
+      home: kGetStorage.read('myId') != null ? HomeScreen() : SignScreen(),
     );
   }
 }

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:encrypt/encrypt.dart';
+import 'package:flutter/cupertino.dart' hide Key;
+import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
 import 'package:reflex/views/share_photo_screen.dart';
 import 'package:reflex/views/user.dart';
 import 'package:reflex/widgets/widget.dart';
-// import 'package:audioplayers/audioplayers.dart';
 
 class MessagingScreen extends StatefulWidget {
   final String _name;
@@ -53,8 +53,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
         (doc) {
           if (!doc.exists) {
             createRoom(_roomId, widget._userId);
-            updateUserChatHistoryMembers(widget._userId);
-            updateRoomUserToken(_roomId);
+            updateRoomToken(_roomId);
+            updateLastRoomVisitTime(_roomId);
           }
         },
       );
@@ -115,6 +115,22 @@ class _MessagingScreenState extends State<MessagingScreen> {
 
   var messagesStreamBuilder;
 
+  encryptMessage() {
+    final plainText = _textController.text.trim();
+
+    final key = Key.fromLength(32);
+    final iv = IV.fromLength(16);
+    final encrypter = Encrypter(AES(key));
+
+    final encrypted = encrypter.encrypt(plainText, iv: iv);
+
+    sendMessage(
+      _roomId,
+      widget._userId,
+      encrypted.base64,
+    );
+  }
+
   @override
   void dispose() {
     _textController.dispose();
@@ -158,7 +174,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
 
         if (snapshot.data.docs.length > 0) {
           Timer(
-            Duration(milliseconds: 10),
+            Duration(milliseconds: 5),
             () => _controller.jumpTo(_controller.position.maxScrollExtent),
           );
         }
@@ -166,9 +182,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
         if (snapshot.data.docs.length == 0) {
           return Container(
             height: 300,
-            child: noDataSnapshotMessage(
-              'Start a new conversation',
-              Text('Learn more about each other'),
+            child: noRoomChatsMessage(
+              widget._profilePhoto,
+              widget._name,
             ),
           );
         }
@@ -217,9 +233,10 @@ class _MessagingScreenState extends State<MessagingScreen> {
       child: SafeArea(
         child: Scaffold(
           body: Scaffold(
-            backgroundColor: Get.isDarkMode ? Colors.black : Colors.white,
+            backgroundColor: Get.isDarkMode ? Colors.grey[800] : Colors.white,
             appBar: AppBar(
-              backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+              backgroundColor:
+                  !Get.isDarkMode ? Colors.white : Colors.grey[900],
               elevation: 0,
               title: Row(
                 children: [
@@ -260,21 +277,21 @@ class _MessagingScreenState extends State<MessagingScreen> {
                                 !Get.isDarkMode ? Colors.black : Colors.white,
                           ),
                         ),
-                        Text(
-                          'Last seen 12hrs ago',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: !Get.isDarkMode ? Colors.grey : Colors.white,
-                          ),
-                        ),
+                        // Text(
+                        //   'Last seen 12hrs ago',
+                        //   overflow: TextOverflow.ellipsis,
+                        //   softWrap: true,
+                        //   style: TextStyle(
+                        //     fontSize: 12,
+                        //     color: !Get.isDarkMode ? Colors.grey : Colors.white,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
                 ],
               ),
-              automaticallyImplyLeading: false,
+              // automaticallyImplyLeading: false,
               leading: IconButton(
                 icon: Icon(
                   Icons.arrow_back,
@@ -288,13 +305,6 @@ class _MessagingScreenState extends State<MessagingScreen> {
               actions: [
                 IconButton(
                   icon: Icon(
-                    CupertinoIcons.phone_fill,
-                    color: kPrimaryColor,
-                  ),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: Icon(
                     Icons.more_vert,
                     color: kPrimaryColor,
                   ),
@@ -303,7 +313,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
               ],
             ),
             bottomNavigationBar: BottomAppBar(
-              color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+              color: Get.isDarkMode ? Colors.grey[900] : Colors.white,
               elevation: 0,
               child: Container(
                 padding: EdgeInsets.all(3),
@@ -313,9 +323,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       flex: 1,
                       child: GestureDetector(
                         child: Icon(
-                          CupertinoIcons.smiley_fill,
+                          CupertinoIcons.smiley,
                           size: 25,
-                          color: kPrimaryColor,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
@@ -324,9 +334,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       child: GestureDetector(
                         onTap: () => plusButtonSheet(),
                         child: Icon(
-                          CupertinoIcons.plus_circle_fill,
+                          CupertinoIcons.plus_square,
                           size: 25,
-                          color: kPrimaryColor,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
@@ -334,9 +344,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       flex: 1,
                       child: GestureDetector(
                         child: Icon(
-                          CupertinoIcons.mic_fill,
+                          CupertinoIcons.mic,
                           size: 25,
-                          color: kPrimaryColor,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
@@ -375,10 +385,13 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       child: IconButton(
                         onPressed: () {
                           if (_textController.text.trim() != '') {
-                            sendMessage(
-                              _roomId,
-                              _textController.text.trim(),
-                            ).then((value) => playMessageSentTone());
+                            // sendMessage(
+                            //   _roomId,
+                            //   widget._userId,
+                            //   _textController.text.trim(),
+                            // ).then((value) => playMessageSentTone());
+
+                            encryptMessage();
 
                             _textController.text = '';
                           } else

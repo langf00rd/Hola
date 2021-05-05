@@ -145,7 +145,7 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
 
         if (snapshot.data.docs.length > 0) {
           Timer(
-            Duration(milliseconds: 10),
+            Duration(milliseconds: 5),
             () => _controller.jumpTo(_controller.position.maxScrollExtent),
           );
         }
@@ -204,9 +204,10 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
       child: SafeArea(
         child: Scaffold(
           body: Scaffold(
-            backgroundColor: Get.isDarkMode ? Colors.black : Colors.white,
+            backgroundColor: Get.isDarkMode ? Colors.grey[800] : Colors.white,
             appBar: AppBar(
-              backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+              backgroundColor:
+                  !Get.isDarkMode ? Colors.white : Colors.grey[900],
               elevation: 0,
               title: Row(
                 children: [
@@ -271,7 +272,7 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
                   color: kPrimaryColor,
                 ),
                 onPressed: () {
-                  updateLastRoomVisitTime(widget._clubId);
+                  updateClubLastRoomVisitTime(widget._clubId);
                   Get.back();
                 },
               ),
@@ -286,7 +287,7 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
               ],
             ),
             bottomNavigationBar: BottomAppBar(
-              color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+              color: Get.isDarkMode ? Colors.grey[900] : Colors.white,
               elevation: 0,
               child: Container(
                 padding: EdgeInsets.all(3),
@@ -296,9 +297,9 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
                       flex: 1,
                       child: GestureDetector(
                         child: Icon(
-                          CupertinoIcons.smiley_fill,
-                          size: 25,
-                          color: kPrimaryColor,
+                          CupertinoIcons.smiley,
+                          size: 24,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
@@ -307,9 +308,9 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
                       child: GestureDetector(
                         onTap: () => plusButtonSheet(),
                         child: Icon(
-                          CupertinoIcons.plus_circle_fill,
-                          size: 25,
-                          color: kPrimaryColor,
+                          CupertinoIcons.plus_square,
+                          size: 24,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
@@ -317,9 +318,9 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
                       flex: 1,
                       child: GestureDetector(
                         child: Icon(
-                          CupertinoIcons.mic_fill,
-                          size: 25,
-                          color: kPrimaryColor,
+                          CupertinoIcons.mic,
+                          size: 24,
+                          color: Colors.grey,
                         ),
                       ),
                     ),

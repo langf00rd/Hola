@@ -1,12 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:reflex/models/constants.dart';
-import 'package:reflex/services/services.dart';
-import 'package:reflex/views/explore_screen.dart';
 import 'package:reflex/views/home_screen.dart';
-import 'package:reflex/views/people_screen.dart';
-import 'package:reflex/widgets/widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class HomeInit extends StatefulWidget {
@@ -15,27 +9,26 @@ class HomeInit extends StatefulWidget {
 }
 
 class _HomeInitState extends State<HomeInit> {
-  TabController _tabController;
-  int _currentTabIndex = 0;
+  // TabController _tabController;
+  // int _currentTabIndex = 0;
 
-  List<Widget> _allScreens = [
-    HomeScreen(),
-    PeopleScreen(),
-    ExploreScreen(),
-  ];
+  // List<Widget> _allScreens = [
+  //   HomeScreen(),
+  //   PeopleScreen(),
+  //   // ExploreScreen(),
+  // ];
 
-  void changeTabIndex(int index) {
-    if (mounted) {
-      setState(() {
-        _currentTabIndex = index;
-      });
-    }
-  }
+  // void changeTabIndex(int index) {
+  //   if (mounted) {
+  //     setState(() {
+  //       _currentTabIndex = index;
+  //     });
+  //   }
+  // }
 
   @override
   void initState() {
     super.initState();
-    registerNotification();
     // sendNotif();
     //
     // FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -111,63 +104,57 @@ class _HomeInitState extends State<HomeInit> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Container(
-        child: Scaffold(
-          bottomNavigationBar: Container(
-            height: 55,
-            child: BottomAppBar(
-              color: !Get.isDarkMode ? Colors.white : Colors.black,
-              elevation: 0,
-              child: TabBar(
-                controller: _tabController,
-                onTap: (index) {
-                  changeTabIndex(index);
-                },
-                tabs: [
-                  bottomNavIconTextLabel(
-                    'Home',
-                    Icon(
-                      Icons.home,
-                      size: 25,
-                    ),
-                  ),
-                  bottomNavIconTextLabel(
-                    'People',
-                    Icon(
-                      CupertinoIcons.person_2_fill,
-                      size: 25,
-                    ),
-                  ),
-                  // bottomNavIconTextLabel(
-                  //   'Updates',
-                  //   Icon(
-                  //     CupertinoIcons.time,
-                  //     size: 25,
-                  //   ),
-                  // ),
-                  bottomNavIconTextLabel(
-                    'Explore',
-                    Icon(
-                      CupertinoIcons.compass_fill,
-                      size: 25,
-                    ),
-                  ),
-                ],
-                indicatorColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                unselectedLabelColor:
-                    Get.isDarkMode ? Colors.white : Colors.grey[500],
-                labelColor: kPrimaryColor,
-              ),
-            ),
-          ),
-          body: IndexedStack(
-            index: _currentTabIndex,
-            children: _allScreens,
-          ),
-        ),
+    return Container(
+      child: Scaffold(
+        // bottomNavigationBar: Container(
+        //   height: 55,
+        //   child: BottomAppBar(
+        //     color: !Get.isDarkMode ? Colors.white : Colors.black,
+        //     elevation: 0,
+        //     child: TabBar(
+        //       controller: _tabController,
+        //       onTap: (index) {
+        //         changeTabIndex(index);
+        //       },
+        //       tabs: [
+        //         bottomNavIconTextLabel(
+        //           'Home',
+        //           Icon(
+        //             Icons.home,
+        //             size: 25,
+        //           ),
+        //         ),
+        //         bottomNavIconTextLabel(
+        //           'People',
+        //           Icon(
+        //             CupertinoIcons.person_2_fill,
+        //             size: 25,
+        //           ),
+        //         ),
+        //         // bottomNavIconTextLabel(
+        //         //   'Updates',
+        //         //   Icon(
+        //         //     CupertinoIcons.time,
+        //         //     size: 25,
+        //         //   ),
+        //         // ),
+        //         // bottomNavIconTextLabel(
+        //         //   'Explore',
+        //         //   Icon(
+        //         //     CupertinoIcons.compass_fill,
+        //         //     size: 25,
+        //         //   ),
+        //         // ),
+        //       ],
+        //       indicatorColor: Colors.transparent,
+        //       indicatorSize: TabBarIndicatorSize.tab,
+        //       unselectedLabelColor:
+        //           Get.isDarkMode ? Colors.white : Colors.grey[500],
+        //       labelColor: kPrimaryColor,
+        //     ),
+        //   ),
+        // ),
+        body: HomeScreen(),
       ),
     );
   }

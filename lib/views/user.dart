@@ -61,7 +61,7 @@ class _UserScreenState extends State<UserScreen> {
       color: Colors.black,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: !Get.isDarkMode ? Colors.grey[100] : kDarkThemeBlack,
+          backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
           appBar: AppBar(
             backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
             title: Text(
@@ -97,12 +97,6 @@ class _UserScreenState extends State<UserScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
-                    border: Border.all(
-                      color: Get.isDarkMode
-                          ? Colors.transparent
-                          : Colors.grey[200],
-                      width: 1,
-                    ),
                   ),
                   width: MediaQuery.of(context).size.width,
                   padding: EdgeInsets.all(10),
@@ -204,58 +198,34 @@ class _UserScreenState extends State<UserScreen> {
                   ),
                 ),
                 Container(
-                  decoration: BoxDecoration(
-                    color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
-                    border: Border.all(
-                      color: Get.isDarkMode
-                          ? Colors.transparent
-                          : Colors.grey[200],
-                      width: 1,
-                    ),
-                  ),
-                  child: Container(
-                    // scrollDirection: Axis.horizontal,
-                    child: Wrap(
-                      // mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        for (var interest in userInterests)
-                          Container(
-                            // color: Colors.grey[100],
-                            padding: EdgeInsets.symmetric(
-                              vertical: 7,
-                              horizontal: 12,
-                            ),
-                            margin: EdgeInsets.all(8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  (interest == 'Reading')
-                                      ? CupertinoIcons.book_fill
-                                      : CupertinoIcons.heart_fill
-
-                                  //  :(interest == 'Reading')
-                                  // ? CupertinoIcons.book_fill
-                                  // : CupertinoIcons.heart_fill,
-
-                                  ,
-                                  color: Colors.red,
-                                  size: 15,
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  interest,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                  child: Wrap(
+                    children: [
+                      for (var interest in userInterests)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Get.isDarkMode
+                                ? Colors.grey[900]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 7,
+                            horizontal: 12,
+                          ),
+                          margin: EdgeInsets.all(8),
+                          child: Text(
+                            interest,
+                            style: TextStyle(
+                              color: Get.isDarkMode
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                              fontSize: 15,
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
-                )
+                ),
               ],
             ),
           ),

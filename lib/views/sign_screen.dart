@@ -107,82 +107,79 @@ class _SignScreenState extends State<SignScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: kPrimaryColor,
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          bottomSheet: Container(
-            color: Colors.white,
-            height: 60,
-            padding: EdgeInsets.all(10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(),
-                !loading
-                    ? signButton('Done', () {
-                        if (_passwordController.text.length > 1 &&
-                            _emailController.text.length > 1)
-                          loginUser();
-                        else
-                          singleButtonDialogue('Please input your info.');
-                      })
-                    : Container(),
-              ],
-            ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        bottomSheet: Container(
+          color: Colors.white,
+          height: 60,
+          padding: EdgeInsets.all(10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(),
+              !loading
+                  ? signButton('Done', () {
+                      if (_passwordController.text.length > 1 &&
+                          _emailController.text.length > 1)
+                        loginUser();
+                      else
+                        singleButtonDialogue('Please input your info.');
+                    })
+                  : Container(),
+            ],
           ),
-          body: SingleChildScrollView(
-            child: Container(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              child: !loading
-                  ? Column(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            color: kPrimaryColor,
-                            child: Center(
-                              child: CircleAvatar(
-                                radius: 60,
-                                backgroundColor: Colors.grey[100],
+        ),
+        body: SingleChildScrollView(
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
+            child: !loading
+                ? Column(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          color: kPrimaryColor,
+                          child: Center(
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Colors.grey[100],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          padding: EdgeInsets.all(30),
+                          color: Colors.white,
+                          child: Column(
+                            children: [
+                              inputField(
+                                _emailController,
+                                'Your e-mail',
+                                'An e-mail is required to join the network',
+                                TextInputType.name,
                               ),
-                            ),
+                              SizedBox(height: 40),
+                              inputField(
+                                _passwordController,
+                                'Password',
+                                '',
+                                TextInputType.text,
+                              ),
+                            ],
                           ),
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            padding: EdgeInsets.all(30),
-                            color: Colors.white,
-                            child: Column(
-                              children: [
-                                inputField(
-                                  _emailController,
-                                  'Your e-mail',
-                                  'An e-mail is required to join the network',
-                                  TextInputType.name,
-                                ),
-                                SizedBox(height: 40),
-                                inputField(
-                                  _passwordController,
-                                  'Password',
-                                  '',
-                                  TextInputType.text,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Center(
-                      child: myLoader(),
-                    ),
-            ),
+                      ),
+                    ],
+                  )
+                : Center(
+                    child: myLoader(),
+                  ),
           ),
         ),
       ),

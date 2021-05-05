@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
@@ -21,6 +21,10 @@ Future insertSignupData(
   String _interestThree,
   final _selectedMenuItems,
 ) async {
+  List _chatHistoryMembers = [
+    _uid,
+  ];
+
   await kUsersRef.doc(_uid).set({
     'email': _email,
     'name': _username,
@@ -32,14 +36,10 @@ Future insertSignupData(
     'interestTwo': _interestTwo,
     'interestThree': _interestThree,
     'interests': _selectedMenuItems,
-    'joinDate': DateTime.now(),
+    'joinDate': DateTime.now().toUtc(),
     'onlineStatus': 'Online',
+    'chatHistoryMembers': _chatHistoryMembers,
   });
-
-  String _myRoom = _uid + _uid;
-
-  sendMessage(_myRoom,
-      'Hola mi amigo 😎. This is your private space. Messages & photos saved here are only visible to you.');
 }
 
 Future setNewAuthDisplaynamePhotoUrl(username, imageUrl) async {
@@ -71,44 +71,48 @@ Future createRoom(roomId, personId) async {
     kMyId,
   ];
 
+  //initialize room members /users
   await kChatRoomsRef
       .doc(roomId)
       .set({'roomID': roomId, 'roomUsers': _roomUsers});
 
-  await kChatRoomsRef
-      .doc(roomId)
-      .collection('RoomMessages')
-      .doc(kMyId)
-      .set({'roomVisitTime': DateTime.now()});
+  //set notification token and lastRoomVisitTime in RoomLogs collection
+  await kChatRoomsRef.doc(roomId).collection('RoomLogs').doc(kMyId).set({
+    'token': kMyNotificationToken,
+    'roomVisitTime': DateTime.now().toUtc(),
+  });
 
-  await kChatRoomsRef
-      .doc(roomId)
-      .collection('RoomLogs')
-      .doc(kMyId)
-      .set({'token': kMyNotificationToken});
+  await kChatRoomsRef.doc(roomId).collection('RoomLogs').doc(personId).set({
+    'token': '',
+    'roomVisitTime': DateTime.now().toUtc(),
+  });
 
-  await kChatRoomsRef
-      .doc(roomId)
-      .collection('RoomMessages')
-      .doc(personId)
-      .set({'roomVisitTime': DateTime.now()});
-
+  //update room information
   await kChatRoomsRef.doc(roomId).update({
-    'lastMessageTime': DateTime.now(),
+    'lastMessageTime': DateTime.now().toUtc(),
     'lastRoomMessage': 'You are now connected',
     'lastRoomMessageSenderId': '',
+  });
+
+  //update chatHistoryMembers field for both users
+
+  final userDoc = kUsersRef.doc(personId);
+  final myDoc = kUsersRef.doc(kMyId);
+
+  await userDoc.update({
+    'chatHistoryMembers': FieldValue.arrayUnion(_roomUsers),
+  });
+
+  await myDoc.update({
+    'chatHistoryMembers': FieldValue.arrayUnion(_roomUsers),
   });
 }
 
 Future updateLastRoomVisitTime(String _roomId) async {
   try {
-    await kChatRoomsRef
-        .doc(_roomId)
-        .collection('RoomMessages')
-        .doc(kMyId)
-        .update({
+    await kChatRoomsRef.doc(_roomId).collection('RoomLogs').doc(kMyId).update({
       'token': kMyNotificationToken,
-      'roomVisitTime': DateTime.now(),
+      'roomVisitTime': DateTime.now().toUtc(),
     });
   } catch (e) {
     print(e);
@@ -122,11 +126,19 @@ Future updateClubLastRoomVisitTime(String _roomId) async {
         .collection('RoomLogs')
         .doc(kMyId)
         .update({
-      'roomVisitTime': DateTime.now(),
+      'roomVisitTime': DateTime.now().toUtc(),
     });
   } catch (e) {
     print(e);
   }
+}
+
+Future<void> signOut() async {
+  await FirebaseAuth.instance.signOut();
+}
+
+removeAllStorageVariables() async {
+  await kGetStorage.erase();
 }
 
 Future updateAbout(String _aboutText) async {
@@ -173,57 +185,13 @@ Future setRoomToken(String _roomId) async {
       .set({'token': kMyNotificationToken});
 }
 
-Future updateRoomUserToken(String _roomId) async {
-  await kChatRoomsRef.doc(_roomId).collection('RoomLogs').doc(kMyId).get().then(
-    (doc) {
-      if (!doc.exists) setRoomToken(_roomId);
-      if (doc.exists) updateRoomToken(_roomId);
-    },
-  );
-}
-
-Future updateMyChatHistoryMembers(String _userId) async {
-  List _chatHistoryMembers = [
-    _userId,
-  ];
-
-  final myDoc = kUsersRef.doc(kMyId);
-
-  await myDoc.update({
-    'chatHistoryMembers': FieldValue.arrayUnion(_chatHistoryMembers),
-  });
-
-  await myDoc
-      .collection('ChatHistoryMembers')
-      .doc(_userId)
-      .set({_userId: true, 'firstChatDate': DateTime.now()});
-}
-
-Future updateUserChatHistoryMembers(String _userId) async {
-  List _chatHistoryMembers = [
-    kMyId,
-  ];
-
-  final userDoc = kUsersRef.doc(_userId);
-
-  await userDoc.update({
-    'chatHistoryMembers': FieldValue.arrayUnion(_chatHistoryMembers),
-  });
-
-  await userDoc
-      .collection('ChatHistoryMembers')
-      .doc(kMyId)
-      .set({kMyId: true, 'firstChatDate': DateTime.now()}).then((value) {
-    updateMyChatHistoryMembers(_userId);
-  });
-}
-
-Future sendMessage(_roomId, _textControllerText) async {
+//send private message
+Future sendMessage(_roomId, _personId, _textControllerText) async {
   await kChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
     'messageText': _textControllerText,
     'messageImage': null,
     'messageType': 'textMessage',
-    'sendTime': DateTime.now(),
+    'sendTime': DateTime.now().toUtc(),
     'sender': kMyName,
     'senderId': kMyId,
     'senderProfileImage': kMyProfileImage,
@@ -231,35 +199,44 @@ Future sendMessage(_roomId, _textControllerText) async {
 
   String _url = "https://fcm.googleapis.com/fcm/send";
 
-  await http.post(
-    Uri.parse(_url),
-    headers: <String, String>{
-      'Content-Type': 'application/json',
-      'Authorization':
-          'key=AAAAK-eLj9E:APA91bGsm3XNlxscMQ7Ncm1FW-ARHjIEPXD3t-UnGPn2rtVzD7WPeNiENjLzvKSFJij8bRKkd1nmUD2nLZdYO_Gi6kSK5QqmJoTF__mI-4iEsyZtuWsPYnE5pxvuz9jwUmy2U3T_QQxO',
-    },
-    body: jsonEncode(
-      <String, dynamic>{
-        'notification': <String, dynamic>{
-          'body': _textControllerText,
-          'title': 'New message from $kMyName',
-        },
-        'priority': 'high',
-        'data': <String, dynamic>{
-          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          'id': '1',
-          'status': 'done',
-          'body': _textControllerText,
-          'title': 'You have a new message from $kMyId',
-        },
-        'to': kMyNotificationToken,
+  final key = Key.fromLength(32);
+  final iv = IV.fromLength(16);
+  final encrypter = Encrypter(AES(key));
+
+  var plainMessageText = _textControllerText;
+  final decrypted = encrypter.decrypt64(plainMessageText, iv: iv);
+
+  await kUsersRef.doc(_personId).get().then((doc) {
+    http.post(
+      Uri.parse(_url),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization':
+            'key=AAAAK-eLj9E:APA91bGsm3XNlxscMQ7Ncm1FW-ARHjIEPXD3t-UnGPn2rtVzD7WPeNiENjLzvKSFJij8bRKkd1nmUD2nLZdYO_Gi6kSK5QqmJoTF__mI-4iEsyZtuWsPYnE5pxvuz9jwUmy2U3T_QQxO',
       },
-    ),
-  );
+      body: jsonEncode(
+        <String, dynamic>{
+          'notification': <String, dynamic>{
+            'body': decrypted,
+            'title': 'New message from $kMyName',
+          },
+          'priority': 'high',
+          'data': <String, dynamic>{
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'id': '1',
+            'status': 'done',
+            'body': decrypted,
+            'title': 'New message from $kMyName',
+          },
+          'to': doc.data()['token'].toString(),
+        },
+      ),
+    );
+  });
 
   await kChatRoomsRef.doc(_roomId).update({
-    'lastMessageTime': DateTime.now(),
-    'lastRoomMessage': _textControllerText,
+    'lastMessageTime': DateTime.now().toUtc(),
+    'lastRoomMessage': decrypted,
     'lastRoomMessageSenderId': kMyId,
   });
 }
@@ -269,14 +246,14 @@ Future sendClubMessage(_roomId, _textControllerText) async {
     'messageText': _textControllerText,
     'messageImage': null,
     'messageType': 'textMessage',
-    'sendTime': DateTime.now(),
+    'sendTime': DateTime.now().toUtc(),
     'sender': kMyName,
     'senderId': kMyId,
     'senderProfileImage': kMyProfileImage,
   });
 
   await kClubChatRoomsRef.doc(_roomId).update({
-    'lastRoomMessageTime': DateTime.now(),
+    'lastRoomMessageTime': DateTime.now().toUtc(),
     'lastRoomMessage': _textControllerText,
     'lastRoomMessageSenderId': kMyId,
   });
@@ -284,12 +261,20 @@ Future sendClubMessage(_roomId, _textControllerText) async {
 
 Future sendPhoto(
     _photoDescriptionController, _imageUrl, _roomId, _isClub) async {
+  final plainText = _photoDescriptionController;
+
+  final key = Key.fromLength(32);
+  final iv = IV.fromLength(16);
+  final encrypter = Encrypter(AES(key));
+
+  final encrypted = encrypter.encrypt(plainText, iv: iv);
+
   _isClub
       ? await kClubChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
           'messageText': _photoDescriptionController,
           'messageImage': _imageUrl,
           'messageType': 'photoMessage',
-          'sendTime': DateTime.now(),
+          'sendTime': DateTime.now().toUtc(),
           'sender': kMyName,
           'senderId': kMyId,
           'senderProfileImage': kMyProfileImage,
@@ -299,7 +284,7 @@ Future sendPhoto(
           'messageText': _photoDescriptionController,
           'messageImage': _imageUrl,
           'messageType': 'photoMessage',
-          'sendTime': DateTime.now(),
+          'sendTime': DateTime.now().toUtc(),
           'sender': kMyName,
           'senderId': kMyId,
           'senderProfileImage': kMyProfileImage,
@@ -327,7 +312,7 @@ createClub(
     'clubCategory': _clubCategory,
     'clubAdminName': kMyName,
     'clubAdminId': kMyId,
-    'clubCreated': DateTime.now(),
+    'clubCreated': DateTime.now().toUtc(),
     'clubMembers': _clubMembers,
     'clubDescription': _clubDescription,
   });
@@ -339,7 +324,7 @@ createClub(
   ];
 
   await kClubChatRoomsRef.doc(clubDoc.id).set({
-    'lastRoomMessageTime': DateTime.now(),
+    'lastRoomMessageTime': DateTime.now().toUtc(),
     'lastRoomMessage': 'Group created',
     'lastRoomMessageSenderId': kMyId,
     'clubRoomMembers': _clubChatRoomMembers,
@@ -348,8 +333,14 @@ createClub(
     'roomId': clubDoc.id,
   });
 
-  await kClubChatRoomsRef.doc(clubDoc.id).collection('RoomLogs').doc(kMyId).set(
-      {'token': kMyNotificationToken, 'roomVisitTime': DateTime.now()}).then(
+  await kClubChatRoomsRef
+      .doc(clubDoc.id)
+      .collection('RoomLogs')
+      .doc(kMyId)
+      .set({
+    'token': kMyNotificationToken,
+    'roomVisitTime': DateTime.now().toUtc()
+  }).then(
     (value) => Get.off(
       () => ClubInfoScreen(
         clubDoc.id,
@@ -372,8 +363,19 @@ initClubMembers(String _clubId) {
 Future addMeToClub(_clubAdminId, _clubId, _clubName) async {
   await kClubsRef.doc(_clubId).collection('Members').doc(kMyId).set({
     'joinState': 'Joined',
-    'joinDate': DateTime.now(),
+    'joinDate': DateTime.now().toUtc(),
   }).then((value) => updateClubMembers(_clubAdminId, _clubId, _clubName));
+}
+
+Future leaveClub(_clubId) async {
+  await kClubsRef.doc(_clubId).collection('Members').doc(kMyId).delete();
+
+  final clubDoc = kClubsRef.doc(_clubId);
+  List _clubMembers = [
+    kMyId,
+  ];
+
+  clubDoc.update({'clubMembers': FieldValue.arrayRemove(_clubMembers)});
 }
 
 Future updateClubMembers(
@@ -386,11 +388,7 @@ Future updateClubMembers(
     kMyId,
   ];
 
-  clubDoc.update({'clubMembers': FieldValue.arrayUnion(_clubMembers)}).then(
-    (value) {
-      // sendAdminJoinAlert(_clubAdminId, _clubId, _clubName);
-    },
-  );
+  clubDoc.update({'clubMembers': FieldValue.arrayUnion(_clubMembers)});
 }
 
 void registerNotification() async {
@@ -411,11 +409,8 @@ void registerNotification() async {
   String fcmToken = await _messaging.getToken();
 
   if (fcmToken != null) {
-    var tokens = kUsersRef.doc(kMyId).collection('Token').doc(fcmToken);
-
-    await tokens.set({
+    kUsersRef.doc(kMyId).update({
       'token': fcmToken,
-      'createdAt': DateTime.now(),
       'platform': Platform.operatingSystem,
     });
   }
