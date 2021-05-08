@@ -40,10 +40,10 @@ class _UpdateAboutState extends State<UpdateAbout> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: Get.isDarkMode ? Colors.black : Colors.white,
+          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           appBar: AppBar(
             backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
             title: Text(

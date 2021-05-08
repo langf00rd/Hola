@@ -39,12 +39,13 @@ class _MyState extends State<My> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: Get.isDarkMode ? Colors.black : Colors.white,
+          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           appBar: AppBar(
-            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+            backgroundColor:
+                !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
             title: Text(
               'Settings',
               style: TextStyle(
@@ -53,7 +54,7 @@ class _MyState extends State<My> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            elevation: 0,
+            elevation: kShadowInt,
             leading: IconButton(
               icon: Icon(
                 Icons.arrow_back,
@@ -65,21 +66,21 @@ class _MyState extends State<My> {
               IconButton(
                 icon: Icon(
                   CupertinoIcons.search,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
+                  color: Get.isDarkMode ? Colors.white : Colors.black,
                 ),
                 onPressed: () => Get.to(SearchScreen()),
               ),
               IconButton(
                 icon: Icon(
                   CupertinoIcons.pen,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
+                  color: Get.isDarkMode ? Colors.white : Colors.black,
                 ),
                 onPressed: () => Get.to(EditProfileScreen()),
               ),
               IconButton(
                 icon: Icon(
                   Icons.share_outlined,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
+                  color: Get.isDarkMode ? Colors.white : Colors.black,
                 ),
                 onPressed: () {},
               ),

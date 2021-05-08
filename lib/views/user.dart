@@ -142,11 +142,12 @@ class _UserScreenState extends State<UserScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          colorRoundButton(
+                          textColorRoundButton(
                             Icon(
                               CupertinoIcons.bubble_left_fill,
                               color: kPrimaryColor,
                             ),
+                            'Chat',
                             () => Get.to(
                               MessagingScreen(
                                 widget._name,
@@ -155,31 +156,84 @@ class _UserScreenState extends State<UserScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 20),
-                          colorRoundButton(
+
+                          textColorRoundButton(
                             Icon(
                               Icons.share,
                               color: kPrimaryColor,
                             ),
-                            () {},
+                            'Share',
+                            () => Get.to(
+                              MessagingScreen(
+                                widget._name,
+                                widget._profilePhoto,
+                                widget._userId,
+                              ),
+                            ),
                           ),
-                          SizedBox(width: 20),
-                          colorRoundButton(
+
+                          textColorRoundButton(
                             Icon(
-                              CupertinoIcons.phone_fill,
+                              Icons.phone,
                               color: kPrimaryColor,
                             ),
-                            () {},
-                          ),
-                          SizedBox(width: 20),
-                          colorRoundButton(
-                            Icon(
-                              CupertinoIcons.video_camera_solid,
-                              color: kPrimaryColor,
+                            'Call',
+                            () => Get.to(
+                              MessagingScreen(
+                                widget._name,
+                                widget._profilePhoto,
+                                widget._userId,
+                              ),
                             ),
-                            () {},
                           ),
-                          SizedBox(width: 20),
+
+                          // textColorRoundButton(
+                          //   Icon(
+                          //     Icons.share,
+                          //     color: kPrimaryColor,
+                          //   ),
+                          //   'Chat',
+                          //   () {},
+                          // ),
+
+                          // colorRoundButton(
+                          //   Icon(
+                          //     CupertinoIcons.bubble_left_fill,
+                          //     color: kPrimaryColor,
+                          //   ),
+                          //   () => Get.to(
+                          //     MessagingScreen(
+                          //       widget._name,
+                          //       widget._profilePhoto,
+                          //       widget._userId,
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(width: 20),
+                          // colorRoundButton(
+                          //   Icon(
+                          //     Icons.share,
+                          //     color: kPrimaryColor,
+                          //   ),
+                          //   () {},
+                          // ),
+                          // SizedBox(width: 20),
+                          // colorRoundButton(
+                          //   Icon(
+                          //     CupertinoIcons.phone_fill,
+                          //     color: kPrimaryColor,
+                          //   ),
+                          //   () {},
+                          // ),
+                          // SizedBox(width: 20),
+                          // colorRoundButton(
+                          //   Icon(
+                          //     CupertinoIcons.video_camera_solid,
+                          //     color: kPrimaryColor,
+                          //   ),
+                          //   () {},
+                          // ),
+                          // SizedBox(width: 20),
                         ],
                       ),
                       SizedBox(height: 10),

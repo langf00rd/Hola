@@ -80,7 +80,7 @@ class _CustomizeScreenState extends State<CustomizeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+        backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
         toolbarHeight: 55,
         elevation: 0.7,
         title: Text(

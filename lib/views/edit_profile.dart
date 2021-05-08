@@ -14,10 +14,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: Get.isDarkMode ? Colors.black : Colors.white,
+          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           appBar: AppBar(
             backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
             title: Text(
@@ -80,7 +80,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             children: [
                               Text('About you', style: kBold15),
                               SizedBox(height: 13),
-                              Text(kMyAbout),
+                              Text(
+                                kMyAbout,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                ),
+                              ),
                             ],
                           ),
                         ),

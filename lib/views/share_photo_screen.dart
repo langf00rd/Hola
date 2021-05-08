@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' hide Key;
+import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:line_icons/line_icons.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
 import 'package:reflex/widgets/widget.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SharePhotoScreen extends StatefulWidget {
   final String _roomId;
@@ -29,19 +29,40 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
   File _imageFile;
   bool isImageSelected = false;
   bool loading = false;
-  TextEditingController _photoDescriptionController = TextEditingController();
 
   Future pickImage(ImageSource source) async {
-    final pickedFile = await picker.getImage(
-      source: source,
-    );
-    _imageFile = File(pickedFile.path);
+    // FilePickerResult result = await FilePicker.platform.pickFiles();
 
-    if (mounted) {
-      setState(() {
-        isImageSelected = true;
-      });
+    // if (result != null) {
+    //   File file = File(result.files.single.path);
+    // } else {
+    //   // User canceled the picker
+    // }
+
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'jpeg'],
+    );
+
+    if (result != null) {
+      List<File> files = result.paths.map((path) => File(path)).toList();
+
+      print(files.length);
+    } else {
+      // User canceled the picker
     }
+
+    // final pickedFile = await picker.getImage(
+    //   source: source,
+    // );
+    // _imageFile = File(pickedFile.path);
+
+    // if (mounted) {
+    //   setState(() {
+    //     isImageSelected = true;
+    //   });
+    // }
   }
 
   Future uploadImage() async {
@@ -62,40 +83,33 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
 
         TaskSnapshot taskSnapshot = await uploadTask;
 
-        String url = await taskSnapshot.ref.getDownloadURL();
+        String urls = await taskSnapshot.ref.getDownloadURL();
+
+        List allUrls = [];
+
+        allUrls.add(urls);
 
         await sendPhoto(
-          _photoDescriptionController.text,
-          url,
+          allUrls,
           widget._roomId,
           widget._isClub,
         );
 
-        if (_photoDescriptionController.text.isEmpty)
-          widget._isClub
-              ? await kClubChatRoomsRef.doc(widget._roomId).update({
-                  'lastRoomMessageTime': DateTime.now(),
-                  'lastRoomMessage': 'Sent a photo',
-                  'lastRoomMessageSenderId': kMyId,
-                })
-              : await kChatRoomsRef.doc(widget._roomId).update({
-                  'lastRoomMessageTime': DateTime.now(),
-                  'lastRoomMessage': 'Sent a photo',
-                  'lastRoomMessageSenderId': kMyId,
-                });
+        if (widget._isClub) {
+          await kClubChatRoomsRef.doc(widget._roomId).update({
+            'lastRoomMessageTime': DateTime.now(),
+            'lastRoomMessage': '🌄 Sent a photo',
+            'lastRoomMessageSenderId': kMyId,
+          });
+        }
 
-        if (_photoDescriptionController.text.isNotEmpty)
-          widget._isClub
-              ? await kClubChatRoomsRef.doc(widget._roomId).update({
-                  'lastRoomMessageTime': DateTime.now(),
-                  'lastRoomMessage': _photoDescriptionController.text,
-                  'lastRoomMessageSenderId': kMyId,
-                })
-              : await kChatRoomsRef.doc(widget._roomId).update({
-                  'lastRoomMessageTime': DateTime.now(),
-                  'lastRoomMessage': _photoDescriptionController.text,
-                  'lastRoomMessageSenderId': kMyId,
-                });
+        if (!widget._isClub) {
+          await kChatRoomsRef.doc(widget._roomId).update({
+            'lastRoomMessageTime': DateTime.now(),
+            'lastRoomMessage': '🌄 Sent a photo',
+            'lastRoomMessageSenderId': kMyId,
+          });
+        }
 
         Get.back();
       }
@@ -120,8 +134,9 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
       backgroundColor: Colors.black,
       body: Scaffold(
         backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.transparent,
           elevation: 0.3,
           title: Text(
             widget._name,
@@ -148,7 +163,7 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
             ),
             IconButton(
               icon: Icon(
-                LineIcons.camera,
+                CupertinoIcons.camera,
                 color: Colors.white,
               ),
               onPressed: () => pickImage(ImageSource.camera),
@@ -181,56 +196,56 @@ class _SharePhotoScreenState extends State<SharePhotoScreen> {
                 : SizedBox.shrink(),
           ],
         ),
-        bottomNavigationBar: !loading
-            ? BottomAppBar(
-                color: Colors.transparent,
-                elevation: 3,
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: Container(
-                          height: 40,
-                          child: TextFormField(
-                            style: TextStyle(color: Colors.white),
-                            controller: _photoDescriptionController,
-                            onChanged: (value) {},
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(
-                                CupertinoIcons.pen,
-                                color: Colors.white,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50),
-                                borderSide: BorderSide(
-                                  color: Colors.white,
-                                  width: 1,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50),
-                                borderSide: BorderSide(
-                                  color: Colors.white,
-                                  width: 1,
-                                ),
-                              ),
-                              contentPadding: EdgeInsets.only(left: 15),
-                              hintText: "Add photo caption...",
-                              hintStyle: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : SizedBox.shrink(),
+        // bottomNavigationBar: !loading
+        //     ? BottomAppBar(
+        //         color: Colors.transparent,
+        //         elevation: 3,
+        //         child: Container(
+        //           padding: EdgeInsets.all(10),
+        //           child: Row(
+        //             children: [
+        //               Expanded(
+        //                 flex: 5,
+        //                 child: Container(
+        //                   height: 40,
+        //                   child: TextFormField(
+        //                     style: TextStyle(color: Colors.white),
+        //                     controller: _photoDescriptionController,
+        //                     onChanged: (value) {},
+        //                     decoration: InputDecoration(
+        //                       prefixIcon: Icon(
+        //                         CupertinoIcons.pen,
+        //                         color: Colors.white,
+        //                       ),
+        //                       focusedBorder: OutlineInputBorder(
+        //                         borderRadius: BorderRadius.circular(50),
+        //                         borderSide: BorderSide(
+        //                           color: Colors.white,
+        //                           width: 1,
+        //                         ),
+        //                       ),
+        //                       enabledBorder: OutlineInputBorder(
+        //                         borderRadius: BorderRadius.circular(50),
+        //                         borderSide: BorderSide(
+        //                           color: Colors.white,
+        //                           width: 1,
+        //                         ),
+        //                       ),
+        //                       contentPadding: EdgeInsets.only(left: 15),
+        //                       hintText: "Add photo caption...",
+        //                       hintStyle: TextStyle(
+        //                         fontSize: 14,
+        //                         color: Colors.white,
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       )
+        //     : SizedBox.shrink(),
         body: !loading
             ? Container(
                 child: Center(

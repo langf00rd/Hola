@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
 import 'package:reflex/views/home_init.dart';
+import 'package:reflex/views/home_screen.dart';
 import 'package:reflex/widgets/widget.dart';
 
 class SetProfilePhotoScreen extends StatefulWidget {
@@ -150,7 +151,7 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
         kGetStorage.write('myId', resultUser.uid);
         kGetStorage.write('myAbout', _about);
 
-        Get.offAll(() => HomeInit());
+        Get.offAll(() => HomeScreen());
       });
     } catch (e) {
       if (mounted) {
@@ -264,139 +265,120 @@ class _SetProfilePhotoScreenState extends State<SetProfilePhotoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: kPrimaryColor,
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          bottomSheet: Container(
-            color: Colors.white,
-            height: 60,
-            padding: EdgeInsets.all(10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(),
-                signButton(
-                  'Next',
-                  () {
-                    // if (hasSelectedItem == false)
-                    //   singleButtonDialogue('What are your interests?');
-
-                    // if (_nameController.text.length < 1)
-                    //   singleButtonDialogue('What is your name?');
-
-                    // if (_aboutController.text.length < 1)
-                    //   singleButtonDialogue('Describe yourself');
-                    // else
-                    initSignUp();
-                  },
-                ),
-              ],
-            ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        bottomSheet: Container(
+          color: Colors.white,
+          height: 60,
+          padding: EdgeInsets.all(10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(),
+              !loading
+                  ? signButton(
+                      'Next',
+                      () {
+                        initSignUp();
+                      },
+                    )
+                  : Container(),
+            ],
           ),
-          body: !loading
-              ? Container(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        SizedBox(height: 40),
-                        Center(
-                          child: Text(
-                            'Set personal info.',
-                            style: kFont23,
+        ),
+        body: !loading
+            ? Container(
+                height: MediaQuery.of(context).size.height - 100,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 15),
+                      Center(
+                        child: Text(
+                          'Set personal info.',
+                          style: kFont23,
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      GestureDetector(
+                        onTap: () => choosePhotoOptionsSheet(),
+                        child: Center(
+                          child: Container(
+                            height: 150,
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Colors.grey[100],
+                              backgroundImage: _imageFile != null
+                                  ? FileImage(_imageFile)
+                                  : AssetImage('./assets/temporalPhoto.png'),
+                            ),
                           ),
                         ),
-                        SizedBox(height: 40),
-                        GestureDetector(
-                          onTap: () => choosePhotoOptionsSheet(),
-                          child: Stack(
+                      ),
+                      Container(
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          padding: EdgeInsets.fromLTRB(30, 30, 30, 0),
+                          child: Column(
                             children: [
-                              Center(
-                                child: Container(
-                                  height: 150,
-                                  child: CircleAvatar(
-                                    radius: 70,
-                                    backgroundColor: Colors.grey[100],
-                                    backgroundImage: _imageFile != null
-                                        ? FileImage(_imageFile)
-                                        : AssetImage('./assets/img.jpg'),
-                                  ),
-                                ),
+                              inputField(
+                                _nameController,
+                                "What's your name?",
+                                '',
+                                TextInputType.name,
                               ),
-                              _imageFile == null
-                                  ? Align(
-                                      alignment: Alignment.center,
-                                      child: Container(
-                                        margin: EdgeInsets.only(top: 40),
-                                        child: Icon(
-                                          CupertinoIcons.camera,
-                                          size: 60,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                    )
-                                  : Container(),
+                              SizedBox(height: 20),
+                              inputField(
+                                _aboutController,
+                                'Describe yourself',
+                                '',
+                                TextInputType.multiline,
+                              ),
                             ],
                           ),
                         ),
-                        Container(
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            padding: EdgeInsets.all(30),
-                            child: Column(
-                              children: [
-                                inputField(
-                                  _nameController,
-                                  "What's your name?",
-                                  '',
-                                  TextInputType.name,
-                                ),
-                                SizedBox(height: 20),
-                                inputField(
-                                  _aboutController,
-                                  'Describe yourself',
-                                  '',
-                                  TextInputType.multiline,
-                                ),
-                              ],
+                      ),
+                      // SizedBox(height: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.only(left: 30, top: 30),
+                            child: Text(
+                              'What are your interests?',
+                              style: placeholderTextStyle,
                             ),
                           ),
-                        ),
-                        SizedBox(height: 20),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(15.0),
-                              child: FindDropdown<String>.multiSelect(
-                                items: kInterestsItems,
-                                label: "",
-                                onChanged: (items) {
-                                  if (mounted) {
-                                    setState(() {
-                                      selectedMenuItems = items;
-                                      interestOne = items[1];
-                                      interestTwo = items[0];
-                                      interestThree = items[3];
-                                      hasSelectedItem = true;
-                                    });
-                                  }
-                                },
-                                selectedItems: ["Reading"],
-                              ),
+                          Container(
+                            padding: EdgeInsets.only(left: 30, right: 30),
+                            child: FindDropdown<String>.multiSelect(
+                              items: kInterestsItems,
+                              label: "",
+                              onChanged: (items) {
+                                if (mounted) {
+                                  setState(() {
+                                    selectedMenuItems = items;
+                                    interestOne = items[1];
+                                    interestTwo = items[0];
+                                    interestThree = items[3];
+                                    hasSelectedItem = true;
+                                  });
+                                }
+                              },
+                              selectedItems: ["Reading"],
                             ),
-                          ],
-                        ),
-                        SizedBox(height: 50),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                      // SizedBox(height: 50),
+                    ],
                   ),
-                )
-              : Center(
-                  child: myLoader(),
                 ),
-        ),
+              )
+            : Center(
+                child: myLoader(),
+              ),
       ),
     );
   }

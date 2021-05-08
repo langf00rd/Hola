@@ -218,14 +218,14 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: DefaultTabController(
           length: 3,
           child: Scaffold(
-            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
             appBar: AppBar(
-              backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+              backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
               title: searchBox(),
               elevation: 0,
               leading: IconButton(

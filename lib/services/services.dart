@@ -185,13 +185,12 @@ Future setRoomToken(String _roomId) async {
       .set({'token': kMyNotificationToken});
 }
 
-//send private message
 Future sendMessage(_roomId, _personId, _textControllerText) async {
   await kChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
     'messageText': _textControllerText,
-    'messageImage': null,
+    'messageImage': [],
     'messageType': 'textMessage',
-    'sendTime': DateTime.now().toUtc(),
+    'sendTime': FieldValue.serverTimestamp(),
     'sender': kMyName,
     'senderId': kMyId,
     'senderProfileImage': kMyProfileImage,
@@ -202,7 +201,6 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
   final key = Key.fromLength(32);
   final iv = IV.fromLength(16);
   final encrypter = Encrypter(AES(key));
-
   var plainMessageText = _textControllerText;
   final decrypted = encrypter.decrypt64(plainMessageText, iv: iv);
 
@@ -218,7 +216,7 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
         <String, dynamic>{
           'notification': <String, dynamic>{
             'body': decrypted,
-            'title': 'New message from $kMyName',
+            'title': 'Space messenger: $kMyName',
           },
           'priority': 'high',
           'data': <String, dynamic>{
@@ -226,7 +224,7 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
             'id': '1',
             'status': 'done',
             'body': decrypted,
-            'title': 'New message from $kMyName',
+            'title': 'Space messenger: $kMyName',
           },
           'to': doc.data()['token'].toString(),
         },
@@ -244,9 +242,9 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
 Future sendClubMessage(_roomId, _textControllerText) async {
   await kClubChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
     'messageText': _textControllerText,
-    'messageImage': null,
+    'messageImage': [],
     'messageType': 'textMessage',
-    'sendTime': DateTime.now().toUtc(),
+    'sendTime': FieldValue.serverTimestamp(),
     'sender': kMyName,
     'senderId': kMyId,
     'senderProfileImage': kMyProfileImage,
@@ -259,30 +257,21 @@ Future sendClubMessage(_roomId, _textControllerText) async {
   });
 }
 
-Future sendPhoto(
-    _photoDescriptionController, _imageUrl, _roomId, _isClub) async {
-  final plainText = _photoDescriptionController;
-
-  final key = Key.fromLength(32);
-  final iv = IV.fromLength(16);
-  final encrypter = Encrypter(AES(key));
-
-  final encrypted = encrypter.encrypt(plainText, iv: iv);
-
+Future sendPhoto(List _imagesUrl, _roomId, _isClub) async {
   _isClub
       ? await kClubChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
-          'messageText': _photoDescriptionController,
-          'messageImage': _imageUrl,
+          'messageText': '',
+          'messageImage': _imagesUrl,
           'messageType': 'photoMessage',
-          'sendTime': DateTime.now().toUtc(),
+          'sendTime': FieldValue.serverTimestamp(),
           'sender': kMyName,
           'senderId': kMyId,
           'senderProfileImage': kMyProfileImage,
           'isImagePost': true,
         })
       : await kChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
-          'messageText': _photoDescriptionController,
-          'messageImage': _imageUrl,
+          'messageText': 'suCsFIIj4ezOI6QSlIImgQ==',
+          'messageImage': _imagesUrl,
           'messageType': 'photoMessage',
           'sendTime': DateTime.now().toUtc(),
           'sender': kMyName,
@@ -290,6 +279,14 @@ Future sendPhoto(
           'senderProfileImage': kMyProfileImage,
           'isImagePost': true,
         });
+}
+
+Future updateRoomLastInfo(String _roomId, String _message) async {
+  await kChatRoomsRef.doc(_roomId).update({
+    'lastRoomMessageTime': DateTime.now(),
+    'lastRoomMessage': _message,
+    'lastRoomMessageSenderId': kMyId,
+  });
 }
 
 createClub(
@@ -414,4 +411,12 @@ void registerNotification() async {
       'platform': Platform.operatingSystem,
     });
   }
+}
+
+Future setTypingState(bool _isTyping, String _roomId) async {
+  kChatRoomsRef
+      .doc(_roomId)
+      .collection('RoomLogs')
+      .doc(kMyId)
+      .update({'isTyping': _isTyping});
 }

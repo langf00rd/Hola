@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -32,6 +35,8 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
   TextEditingController _textController = TextEditingController();
   final _controller = ScrollController();
   int _membersNum = 0;
+  bool loading = false;
+  var percentage = 0;
 
   playMessageSentTone() {
     print('sent');
@@ -52,6 +57,91 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
     });
   }
 
+  Future _pickImages() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+    );
+
+    if (result != null) {
+      List<File> files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
+      print(files.length);
+
+      _uploadImages(files);
+
+      Get.back();
+      Timer(
+        Duration(milliseconds: 1),
+        () => _controller.jumpTo(_controller.position.maxScrollExtent),
+      );
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  Future _uploadImages(List<File> _files) async {
+    if (mounted) {
+      setState(() {
+        loading = true;
+      });
+    }
+
+    List _allUrls = [];
+
+    try {
+      for (int i = 0; i < _files.length; i++) {
+        print(i);
+
+        String filePath = 'imagePosts/${DateTime.now()}.jpg';
+
+        FirebaseStorage storage = FirebaseStorage.instance;
+
+        UploadTask uploadTask =
+            storage.ref().child(filePath).putFile(_files[i]);
+
+        TaskSnapshot taskSnapshot = await uploadTask;
+
+        if (mounted) {
+          setState(() {
+            percentage = 100;
+          });
+        }
+
+        await uploadTask.whenComplete(() => print('complete upload'));
+
+        String imageUrl = await taskSnapshot.ref.getDownloadURL();
+
+        _allUrls.add(imageUrl);
+      }
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+
+      await sendPhoto(_allUrls, widget._clubId, false);
+
+      await kChatRoomsRef.doc(widget._clubId).update({
+        'lastRoomMessageTime': DateTime.now(),
+        'lastRoomMessage': '🌄 Sent a photo',
+        'lastRoomMessageSenderId': kMyId,
+      });
+    } catch (e) {
+      print(e);
+
+      singleButtonDialogue(e);
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
   plusButtonSheet() {
     Get.bottomSheet(
       Container(
@@ -69,13 +159,7 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
             bottomSheetItem(
               Icon(CupertinoIcons.photo, color: kPrimaryColor),
               'Share photo / Camera',
-              () => Get.to(
-                SharePhotoScreen(
-                  widget._clubId,
-                  widget._clubName,
-                  true,
-                ),
-              ),
+              () => _pickImages(),
             ),
             SizedBox(height: 20),
             bottomSheetItem(
@@ -200,7 +284,7 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           body: Scaffold(
@@ -208,7 +292,8 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
             appBar: AppBar(
               backgroundColor:
                   !Get.isDarkMode ? Colors.white : Colors.grey[900],
-              elevation: 0,
+              elevation: kShadowInt,
+              titleSpacing: 0,
               title: Row(
                 children: [
                   GestureDetector(
@@ -391,6 +476,17 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
                   child: Column(
                     children: [
                       messagesStreamBuilder,
+                      loading
+                          ? Column(
+                              children: [
+                                SizedBox(height: 30),
+                                myLoader(),
+                                SizedBox(height: 10),
+                                Text('Sending photo... $percentage%'),
+                                SizedBox(height: 30),
+                              ],
+                            )
+                          : Container(),
                     ],
                   ),
                 ),

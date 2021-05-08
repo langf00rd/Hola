@@ -1,18 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:encrypt/encrypt.dart';
+import 'package:flutter/cupertino.dart' hide Key;
+import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
-import 'package:reflex/views/start_club.dart';
+import 'package:reflex/services/services.dart';
 import 'package:reflex/widgets/widget.dart';
 
-class NewMessageScreen extends StatefulWidget {
+class ForwardToScreen extends StatefulWidget {
+  final _messageText;
+  final _messageTimeStamp;
+  final String _senderId;
+  final String _senderName;
+  final String _senderProfileImage;
+  final List _messageImage;
+  final String _messageType;
+  final String _messageId;
+  final String _roomId;
+  final bool _isClub;
+
+  ForwardToScreen(
+    this._messageText,
+    this._messageTimeStamp,
+    this._senderId,
+    this._senderName,
+    this._senderProfileImage,
+    this._messageImage,
+    this._messageType,
+    this._messageId,
+    this._roomId,
+    this._isClub,
+  );
+
   @override
-  _NewMessageScreenState createState() => _NewMessageScreenState();
+  _ForwardToScreenState createState() => _ForwardToScreenState();
 }
 
-class _NewMessageScreenState extends State<NewMessageScreen> {
+class _ForwardToScreenState extends State<ForwardToScreen> {
   TextEditingController _searchController = TextEditingController();
+
+  _forward(_userId) async {
+    try {
+      final String _room = getRoomId(_userId);
+
+     
+      if (!widget._isClub && widget._messageImage.length <= 0) {
+        final plainText = widget._messageText;
+        final key = Key.fromLength(32);
+        final iv = IV.fromLength(16);
+        final encrypter = Encrypter(AES(key));
+        final encrypted = encrypter.encrypt(plainText, iv: iv);
+
+        await sendMessage(
+          _room,
+          _userId,
+          encrypted.base64,
+        );
+
+        await updateRoomLastInfo(_room, '📌 Forwarded message');
+      }
+
+      
+      if (widget._messageImage.length > 0) {
+        sendPhoto(
+          widget._messageImage,
+          _room,
+          false,
+        );
+
+        await updateRoomLastInfo(_room, '🌄 Sent a photo');
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
 
   Widget searchBox() {
     return Container(
@@ -37,9 +98,57 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide.none,
           ),
-          hintText: 'Search for people',
+          hintText: 'Find someone',
           hintStyle: TextStyle(fontSize: 15),
         ),
+      ),
+    );
+  }
+
+  Widget forwardUserTile(
+    String _name,
+    _profilePhoto,
+    _userId,
+    _interestOne,
+    _interestTwo,
+    _interestThree,
+  ) {
+    return Container(
+      child: Column(
+        children: [
+          ListTile(
+            horizontalTitleGap: 10,
+            contentPadding: EdgeInsets.symmetric(horizontal: 10),
+            title: Text(
+              _name,
+              style: TextStyle(
+                fontSize: 15,
+                color: Get.isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            leading: CircleAvatar(
+              backgroundColor: Colors.grey[100],
+              backgroundImage: NetworkImage(_profilePhoto),
+            ),
+            subtitle: Text(
+              'Likes $_interestOne, $_interestTwo, $_interestThree',
+              overflow: TextOverflow.ellipsis,
+              softWrap: true,
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+            trailing: Container(
+              child: textButton(
+                'Send ...',
+                () async {
+                  singleButtonDialogue('Sent');
+                  await _forward(_userId);
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -55,7 +164,7 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
             backgroundColor:
                 !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
             title: Text(
-              'New message',
+              'Forward to...',
               style: TextStyle(
                 fontSize: 23,
                 color: Get.isDarkMode ? Colors.white : Colors.black,
@@ -79,40 +188,6 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                 children: [
                   searchBox(),
                   SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              CupertinoIcons.group_solid,
-                            ),
-                            SizedBox(width: 10),
-                            GestureDetector(
-                              onTap: () => Get.to(StartClub()),
-                              child: Text(
-                                'Create group',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Get.isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () => Get.to(StartClub()),
-                          child: Icon(
-                            CupertinoIcons.chevron_forward,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   _searchController.value.text.isNotEmpty
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +257,7 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                                       return snapshot.data.docs[index]
                                                   ['userId'] !=
                                               kMyId
-                                          ? userTile(
+                                          ? forwardUserTile(
                                               snapshot.data.docs[index]['name'],
                                               snapshot.data.docs[index]
                                                   ['profileImage'],
@@ -232,51 +307,30 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                               return Text('');
                             }
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(10),
-                                  margin: EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    'Suggested people',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Get.isDarkMode
-                                          ? Colors.grey
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height:
-                                      MediaQuery.of(context).size.height - 200,
-                                  child: ListView.builder(
-                                    itemCount: snapshot.data.docs.length,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    itemBuilder: (context, index) {
-                                      return snapshot.data.docs[index]
-                                                  ['userId'] !=
-                                              kMyId
-                                          ? userTile(
-                                              snapshot.data.docs[index]['name'],
-                                              snapshot.data.docs[index]
-                                                  ['profileImage'],
-                                              snapshot.data.docs[index]
-                                                  ['userId'],
-                                              snapshot.data.docs[index]
-                                                  ['interestOne'],
-                                              snapshot.data.docs[index]
-                                                  ['interestTwo'],
-                                              snapshot.data.docs[index]
-                                                  ['interestThree'],
-                                            )
-                                          : SizedBox.shrink();
-                                    },
-                                  ),
-                                ),
-                              ],
+                            return Container(
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.height - 200,
+                              child: ListView.builder(
+                                itemCount: snapshot.data.docs.length,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return snapshot.data.docs[index]['userId'] !=
+                                          kMyId
+                                      ? forwardUserTile(
+                                          snapshot.data.docs[index]['name'],
+                                          snapshot.data.docs[index]
+                                              ['profileImage'],
+                                          snapshot.data.docs[index]['userId'],
+                                          snapshot.data.docs[index]
+                                              ['interestOne'],
+                                          snapshot.data.docs[index]
+                                              ['interestTwo'],
+                                          snapshot.data.docs[index]
+                                              ['interestThree'],
+                                        )
+                                      : SizedBox.shrink();
+                                },
+                              ),
                             );
                           },
                         ),

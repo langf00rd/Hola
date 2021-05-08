@@ -34,7 +34,7 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
   var _clubCreated;
   String _clubAdminId = '';
   String _clubAdminName = '';
-  List _clubMembers = [];
+  // List _clubMembers = [];
   String _joinState;
   int _membersNum = 0;
   String _clubAdminProfileImage;
@@ -50,7 +50,7 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
             _clubCreated = doc.data()['clubCreated'];
             _clubAdminId = doc.data()['clubAdminId'];
             _clubAdminName = doc.data()['clubAdminName'];
-            _clubMembers = doc.data()['clubMembers'];
+            // _clubMembers = doc.data()['clubMembers'];
           });
         }
       });
@@ -176,12 +176,13 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+          backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
           appBar: AppBar(
-            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
+            backgroundColor:
+                !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
             title: Text(
               widget._clubName,
               style: TextStyle(
@@ -205,13 +206,6 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                   color: Get.isDarkMode ? Colors.white : kPrimaryColor,
                 ),
                 onPressed: () => Get.to(SearchScreen()),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.share,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
-                ),
-                onPressed: () {},
               ),
             ],
           ),
@@ -237,6 +231,99 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 20),
+                  !loading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _joinState != null && _joinState == 'Joined'
+                                ? textColorRoundButton(
+                                    Icon(
+                                      CupertinoIcons.bubble_left_fill,
+                                      color: kPrimaryColor,
+                                    ),
+                                    'Chat',
+                                    () => Get.to(
+                                      ClubMessagingScreen(
+                                        widget._clubId,
+                                        widget._profilePhoto,
+                                        widget._clubName,
+                                        widget._clubDescription,
+                                        widget._clubCategory,
+                                      ),
+                                    ),
+                                  )
+                                : Container(width: 0, height: 0),
+                            _clubAdminId != kMyId && _joinState == null
+                                ? textColorRoundButton(
+                                    Icon(
+                                      CupertinoIcons.plus,
+                                      color: kPrimaryColor,
+                                    ),
+                                    'Join',
+                                    () {
+                                      initJoinClub();
+                                    },
+                                  )
+                                : Container(width: 0, height: 0),
+                            _joinState != null &&
+                                    _clubAdminId != kMyId &&
+                                    _joinState == 'Joined'
+                                ? textColorRoundButton(
+                                    Icon(
+                                      CupertinoIcons.xmark,
+                                      color: kPrimaryColor,
+                                    ),
+                                    'Leave',
+                                    () {
+                                      if (mounted) {
+                                        setState(() {
+                                          loading = true;
+                                        });
+                                      }
+                                      leaveClub(widget._clubId).then((value) {
+                                        _initGetJoinState();
+                                        _getMembersNum();
+
+                                        singleButtonDialogue(
+                                            'You left ${widget._clubName}');
+
+                                        if (mounted) {
+                                          setState(() {
+                                            loading = false;
+                                          });
+                                        }
+                                      });
+                                    },
+                                  )
+                                : Container(width: 0, height: 0),
+                            _clubAdminId == kMyId
+                                ? textColorRoundButton(
+                                    Icon(
+                                      Icons.more_horiz,
+                                      color: kPrimaryColor,
+                                    ),
+                                    'More',
+                                    () {},
+                                  )
+                                : Container(width: 0, height: 0),
+                            textColorRoundButton(
+                              Icon(
+                                Icons.mail,
+                                color: kPrimaryColor,
+                              ),
+                              'Invite',
+                              () {},
+                            ),
+                          ],
+                        )
+                      : Container(
+                          margin: EdgeInsets.only(top: 10),
+                          child: Center(
+                            child: myLoader(),
+                          ),
+                        ),
+                  SizedBox(height: 10),
                   Container(
                     width: MediaQuery.of(context).size.width,
                     child: Column(
@@ -253,6 +340,15 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                         ),
                         SizedBox(height: 20),
                         Text(
+                          widget._clubDescription,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Get.isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
                           _membersNum > 1
                               ? '$_membersNum members'
                               : '$_membersNum member',
@@ -260,15 +356,6 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                             fontSize: 15,
                             color: Get.isDarkMode ? Colors.white : Colors.grey,
                           ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          widget._clubDescription,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Get.isDarkMode ? Colors.white : Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
                         ),
                         SizedBox(height: 10),
                         Text(
@@ -315,94 +402,6 @@ class _ClubInfoScreenState extends State<ClubInfoScreen> {
                       ],
                     ),
                   ),
-                  !loading
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _clubAdminId == kMyId
-                                ? clubInfoButton(
-                                    'Edit group info',
-                                    Icon(
-                                      Icons.more_horiz,
-                                      color: kPrimaryColor,
-                                    ),
-                                    () {},
-                                  )
-                                : Text(''),
-                            _clubAdminId != kMyId && _joinState == null
-                                ? clubInfoButton(
-                                    'Join club',
-                                    Icon(
-                                      CupertinoIcons.person_add,
-                                      color: kPrimaryColor,
-                                    ),
-                                    () => initJoinClub(),
-                                  )
-                                : Text(''),
-                            _joinState != null &&
-                                    _clubAdminId != kMyId &&
-                                    _joinState == 'Joined'
-                                ? clubInfoButton(
-                                    'Leave group',
-                                    Icon(
-                                      CupertinoIcons.xmark,
-                                      color: kPrimaryColor,
-                                    ), () {
-                                    if (mounted) {
-                                      setState(() {
-                                        loading = true;
-                                      });
-                                    }
-                                    leaveClub(widget._clubId).then((value) {
-                                      _initGetJoinState();
-                                      _getMembersNum();
-
-                                      singleButtonDialogue(
-                                          'You left ${widget._clubName}');
-
-                                      if (mounted) {
-                                        setState(() {
-                                          loading = false;
-                                        });
-                                      }
-                                    });
-                                  })
-                                : Text(''),
-                            _joinState != null && _joinState == 'Joined'
-                                ? clubInfoButton(
-                                    'Send message',
-                                    Icon(
-                                      CupertinoIcons.bubble_left,
-                                      color: kPrimaryColor,
-                                    ),
-                                    () => Get.to(
-                                      ClubMessagingScreen(
-                                        widget._clubId,
-                                        widget._profilePhoto,
-                                        widget._clubName,
-                                        widget._clubDescription,
-                                        widget._clubCategory,
-                                      ),
-                                    ),
-                                  )
-                                : Text(''),
-                            clubInfoButton(
-                              'Invite',
-                              Icon(
-                                CupertinoIcons.mail,
-                                color: kPrimaryColor,
-                              ),
-                              () {},
-                            ),
-                          ],
-                        )
-                      : Container(
-                          margin: EdgeInsets.only(top: 10),
-                          child: Center(
-                            child: myLoader(),
-                          ),
-                        ),
                 ],
               ),
             ),

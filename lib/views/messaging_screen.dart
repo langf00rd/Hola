@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart' hide Key;
 import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
-import 'package:reflex/views/share_photo_screen.dart';
 import 'package:reflex/views/user.dart';
 import 'package:reflex/widgets/widget.dart';
 
@@ -21,9 +23,13 @@ class MessagingScreen extends StatefulWidget {
 }
 
 class _MessagingScreenState extends State<MessagingScreen> {
+  final _controller = ScrollController();
+  var percentage = 0;
   String _roomId = '';
   TextEditingController _textController = TextEditingController();
-  final _controller = ScrollController();
+  bool loading = false;
+  bool isTyping = false;
+  bool _isUserTyping = false;
 
   // final AudioCache player = AudioCache();
   // final alarmAudioPath = "messageSent.mp3";
@@ -63,10 +69,94 @@ class _MessagingScreenState extends State<MessagingScreen> {
     }
   }
 
+  Future _pickImages() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+    );
+
+    if (result != null) {
+      List<File> files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
+      print(files.length);
+
+      _uploadImages(files);
+
+      Get.back();
+      Timer(
+        Duration(milliseconds: 1),
+        () => _controller.jumpTo(_controller.position.maxScrollExtent),
+      );
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  Future _uploadImages(List<File> _files) async {
+    if (mounted) {
+      setState(() {
+        loading = true;
+      });
+    }
+
+    List _allUrls = [];
+
+    try {
+      for (int i = 0; i < _files.length; i++) {
+        print(i);
+
+        String filePath = 'imagePosts/${DateTime.now()}.jpg';
+
+        FirebaseStorage storage = FirebaseStorage.instance;
+
+        UploadTask uploadTask =
+            storage.ref().child(filePath).putFile(_files[i]);
+
+        TaskSnapshot taskSnapshot = await uploadTask;
+
+        if (mounted) {
+          setState(() {
+            var t = taskSnapshot.bytesTransferred.toInt();
+            var q = taskSnapshot.totalBytes.toInt();
+
+            percentage = taskSnapshot.bytesTransferred;
+          });
+        }
+
+        await uploadTask.whenComplete(() => print('complete upload'));
+
+        String imageUrl = await taskSnapshot.ref.getDownloadURL();
+
+        _allUrls.add(imageUrl);
+      }
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+
+      await sendPhoto(_allUrls, _roomId, false);
+
+      await updateRoomLastInfo(_roomId, '🌄 Sent a photo');
+    } catch (e) {
+      print(e);
+
+      singleButtonDialogue(e);
+
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
   plusButtonSheet() {
     Get.bottomSheet(
       Container(
-        height: 220,
+        height: 260,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
@@ -79,14 +169,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
           children: [
             bottomSheetItem(
               Icon(CupertinoIcons.photo, color: kPrimaryColor),
-              'Share photo / Camera',
-              () => Get.to(
-                SharePhotoScreen(
-                  _roomId,
-                  widget._name,
-                  false,
-                ),
-              ),
+              'Share photo',
+              () => _pickImages(),
+            ),
+            SizedBox(height: 20),
+            bottomSheetItem(
+              Icon(CupertinoIcons.camera, color: kPrimaryColor),
+              'Open camera',
+              () => _pickImages(),
             ),
             SizedBox(height: 20),
             bottomSheetItem(
@@ -131,6 +221,21 @@ class _MessagingScreenState extends State<MessagingScreen> {
     );
   }
 
+  _getTypingState() {
+    kChatRoomsRef
+        .doc(_roomId)
+        .collection('RoomLogs')
+        .doc(widget._userId)
+        .snapshots()
+        .listen((event) {
+      if (mounted) {
+        setState(() {
+          _isUserTyping = event.data()['isTyping'];
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _textController.dispose();
@@ -144,6 +249,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
     checkRoomExist();
     _roomId = getRoomId(widget._userId);
     updateLastRoomVisitTime(_roomId);
+    _getTypingState();
 
     messagesStreamBuilder = StreamBuilder<QuerySnapshot>(
       stream: kChatRoomsRef
@@ -167,24 +273,24 @@ class _MessagingScreenState extends State<MessagingScreen> {
           return Container(
             height: MediaQuery.of(context).size.height - 200,
             child: Center(
-              child: myLoader(),
+              child: Text('Fetching history...'),
             ),
           );
         }
 
         if (snapshot.data.docs.length > 0) {
           Timer(
-            Duration(milliseconds: 5),
+            Duration(milliseconds: 3),
             () => _controller.jumpTo(_controller.position.maxScrollExtent),
           );
         }
 
         if (snapshot.data.docs.length == 0) {
           return Container(
-            height: 300,
             child: noRoomChatsMessage(
               widget._profilePhoto,
               widget._name,
+              widget._userId,
             ),
           );
         }
@@ -206,9 +312,17 @@ class _MessagingScreenState extends State<MessagingScreen> {
           primary: false,
           physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
+            final key = Key.fromLength(32);
+            final iv = IV.fromLength(16);
+            final encrypter = Encrypter(AES(key));
+
+            var messageText = encrypter
+                .decrypt64(snapshot.data.docs[index]['messageText'], iv: iv)
+                .toString();
+
             return snapshot.data.docs[index]['senderId'] != null
                 ? MessageItem(
-                    snapshot.data.docs[index]['messageText'],
+                    messageText,
                     snapshot.data.docs[index]['sendTime'],
                     snapshot.data.docs[index]['senderId'],
                     snapshot.data.docs[index]['sender'],
@@ -229,7 +343,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           body: Scaffold(
@@ -237,7 +351,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
             appBar: AppBar(
               backgroundColor:
                   !Get.isDarkMode ? Colors.white : Colors.grey[900],
-              elevation: 0,
+              elevation: kShadowInt,
+              titleSpacing: 0,
               title: Row(
                 children: [
                   GestureDetector(
@@ -277,21 +392,24 @@ class _MessagingScreenState extends State<MessagingScreen> {
                                 !Get.isDarkMode ? Colors.black : Colors.white,
                           ),
                         ),
-                        // Text(
-                        //   'Last seen 12hrs ago',
-                        //   overflow: TextOverflow.ellipsis,
-                        //   softWrap: true,
-                        //   style: TextStyle(
-                        //     fontSize: 12,
-                        //     color: !Get.isDarkMode ? Colors.grey : Colors.white,
-                        //   ),
-                        // ),
+                        _isUserTyping != null && _isUserTyping
+                            ? Text(
+                                _isUserTyping ? 'is typing...' : 'active',
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: true,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: !Get.isDarkMode
+                                      ? Colors.grey
+                                      : Colors.white,
+                                ),
+                              )
+                            : Container(),
                       ],
                     ),
                   ),
                 ],
               ),
-              // automaticallyImplyLeading: false,
               leading: IconButton(
                 icon: Icon(
                   Icons.arrow_back,
@@ -316,7 +434,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
               color: Get.isDarkMode ? Colors.grey[900] : Colors.white,
               elevation: 0,
               child: Container(
-                padding: EdgeInsets.all(3),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 child: Row(
                   children: [
                     Expanded(
@@ -325,7 +443,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                         child: Icon(
                           CupertinoIcons.smiley,
                           size: 25,
-                          color: Colors.grey,
+                          // color: Colors.grey,
                         ),
                       ),
                     ),
@@ -336,17 +454,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                         child: Icon(
                           CupertinoIcons.plus_square,
                           size: 25,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: GestureDetector(
-                        child: Icon(
-                          CupertinoIcons.mic,
-                          size: 25,
-                          color: Colors.grey,
+                          // color: Colors.grey,
                         ),
                       ),
                     ),
@@ -364,7 +472,25 @@ class _MessagingScreenState extends State<MessagingScreen> {
                           keyboardType: TextInputType.multiline,
                           maxLines: null,
                           controller: _textController,
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            if (mounted) {
+                              setState(() {
+                                isTyping = true;
+                              });
+                            }
+
+                            setTypingState(isTyping, _roomId);
+
+                            Timer(Duration(seconds: 2), () {
+                              if (mounted) {
+                                setState(() {
+                                  isTyping = false;
+                                });
+                              }
+
+                              setTypingState(isTyping, _roomId);
+                            });
+                          },
                           decoration: InputDecoration(
                             focusedBorder:
                                 OutlineInputBorder(borderSide: BorderSide.none),
@@ -374,36 +500,43 @@ class _MessagingScreenState extends State<MessagingScreen> {
                             hintText: "Type a message...",
                             hintStyle: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey,
+                              // color: Colors.grey,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: IconButton(
-                        onPressed: () {
-                          if (_textController.text.trim() != '') {
-                            // sendMessage(
-                            //   _roomId,
-                            //   widget._userId,
-                            //   _textController.text.trim(),
-                            // ).then((value) => playMessageSentTone());
-
-                            encryptMessage();
-
-                            _textController.text = '';
-                          } else
-                            return;
-                        },
-                        icon: Icon(
-                          CupertinoIcons.paperplane_fill,
-                          size: 25,
-                          color: kPrimaryColor,
-                        ),
-                      ),
-                    ),
+                    _textController.text.isNotEmpty
+                        ? Container(height: 0, width: 0)
+                        : Expanded(
+                            flex: 1,
+                            child: GestureDetector(
+                              child: Icon(
+                                CupertinoIcons.mic,
+                                size: 25,
+                                // color: Colors.grey[800],
+                              ),
+                            ),
+                          ),
+                    _textController.text.isNotEmpty
+                        ? Expanded(
+                            flex: 1,
+                            child: IconButton(
+                              onPressed: () {
+                                if (_textController.text.trim() != '') {
+                                  encryptMessage();
+                                  _textController.text = '';
+                                } else
+                                  return;
+                              },
+                              icon: Icon(
+                                CupertinoIcons.paperplane_fill,
+                                size: 25,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          )
+                        : Container(width: 0, height: 0),
                   ],
                 ),
               ),
@@ -420,6 +553,17 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   child: Column(
                     children: [
                       messagesStreamBuilder,
+                      loading
+                          ? Column(
+                              children: [
+                                SizedBox(height: 30),
+                                myLoader(),
+                                SizedBox(height: 10),
+                                Text('Sending photo... $percentage%'),
+                                SizedBox(height: 30),
+                              ],
+                            )
+                          : Container(),
                     ],
                   ),
                 ),

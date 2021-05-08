@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:line_icons/line_icons.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/views/search_screen.dart';
 import 'package:reflex/widgets/widget.dart';
@@ -123,13 +122,14 @@ class _PeopleScreenState extends State<PeopleScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
           appBar: AppBar(
-            backgroundColor: !Get.isDarkMode ? Colors.white : Colors.black,
-            elevation: 0,
+             backgroundColor:
+                !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
+             elevation: 0,
             title: Text(
               'Find People',
               style: TextStyle(
@@ -149,7 +149,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
               IconButton(
                 icon: Icon(
                   CupertinoIcons.search,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
+                  color: Get.isDarkMode ? Colors.white : Colors.black,
                 ),
                 onPressed: () => Get.to(SearchScreen()),
               ),

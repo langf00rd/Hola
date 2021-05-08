@@ -11,10 +11,11 @@ Color kPrimaryColor = kGetStorage.read('myThemeColor') != null
     : Colors.blueAccent[400];
 Color kAccentColor = Colors.lightGreenAccent;
 Color kDarkThemeBlack = Colors.black;
-Color kDarkBodyThemeBlack = Colors.grey[900];
+Color kDarkBodyThemeBlack = Color(0xff040b15);
 
 final kDefaultFontBold = 'primaryBold';
 final kDefaultFont = 'primaryFont';
+final kShadowInt = 0.0;
 
 // GetStorage constants
 final kMyName = kGetStorage.read('myName');
@@ -67,72 +68,67 @@ GestureDetector appBarCircleAvatar = GestureDetector(
 TextStyle kFont23 = TextStyle(
   fontSize: 23,
   color: Get.isDarkMode ? Colors.white : Colors.black,
-  // fontFamily: kDefaultFontBold,
   fontWeight: FontWeight.bold,
 );
 
 TextStyle kGrey11 = TextStyle(
   fontSize: 11,
   color: Colors.grey,
-  // fontFamily: kDefaultFont,
 );
 
 TextStyle kGrey13 = TextStyle(
   fontSize: 13,
   color: Colors.grey,
-  // fontFamily: kDefaultFont,
+);
+
+TextStyle kGrey12 = TextStyle(
+  fontSize: 12,
+  color: Colors.grey,
 );
 
 TextStyle kGrey14 = TextStyle(
   fontSize: 14,
-  color: Colors.grey[400],
-  // fontFamily: kDefaultFont,
+  color: Colors.grey[500],
 );
 
 TextStyle kGrey16 = TextStyle(
   fontSize: 16,
   color: Colors.grey,
-  // fontFamily: kDefaultFont,
 );
 
-TextStyle kBold18 = TextStyle(
-  fontSize: 18,
-  // fontFamily: kDefaultFontBold,
-  fontWeight: FontWeight.bold,
+TextStyle placeholderTextStyle = TextStyle(
+  fontSize: 16,
+  // fontWeight: FontWeight.bold,
 );
 
 TextStyle kBold15 = TextStyle(
   fontSize: 15,
   color: Get.isDarkMode ? Colors.white : Colors.black,
-  // fontFamily: kDefaultFontBold,
   fontWeight: FontWeight.bold,
 );
 
 // TextStyle kFont13 = TextStyle(
 //   fontSize: 13,
 //   color: Get.isDarkMode ? Colors.white : Colors.black,
-//   // fontFamily: kDefaultFontBold,
+//
 //   // fontWeight:FontWeight.bold,
 // );
 
 TextStyle kBold16 = TextStyle(
   fontSize: 16,
   color: Get.isDarkMode ? Colors.white : Colors.black,
-  // fontFamily: kDefaultFontBold,
   fontWeight: FontWeight.bold,
 );
 
 TextStyle kBoldColor15 = TextStyle(
   fontSize: 15,
   color: Get.isDarkMode ? Colors.white : kPrimaryColor,
-  // fontFamily: kDefaultFontBold,
   fontWeight: FontWeight.bold,
 );
 
 TextStyle kFont14 = TextStyle(
   fontSize: 14,
   color: Get.isDarkMode ? Colors.white : Colors.black,
-  // fontFamily: kDefaultFont,
 );
 
 TextStyle kFont13 = TextStyle(

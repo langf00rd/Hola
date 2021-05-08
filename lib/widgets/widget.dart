@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encrypt/encrypt.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/cupertino.dart' hide Key;
 import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:line_icons/line_icons.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
 import 'package:reflex/views/club_info.dart';
 import 'package:reflex/views/club_messaging_screen.dart';
+import 'package:reflex/views/forward_to.dart';
 import 'package:reflex/views/messaging_screen.dart';
 import 'package:reflex/views/search_screen.dart';
 import 'package:reflex/views/user.dart';
@@ -24,16 +23,15 @@ Widget inputField(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(placeholderText, style: kBold18),
+      Text(placeholderText, style: placeholderTextStyle),
       SizedBox(height: 10),
-      explanatoryText != ''
-          ? Text(explanatoryText, style: kGrey16)
-          : Container(height: 0),
+      // explanatoryText != ''
+      //     ? Text(explanatoryText, style: kGrey16)
+      //     : Container(height: 0),
       Container(
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey[300]),
-          ),
+          border: Border.all(color: Colors.grey[200], width: 1),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: TextFormField(
           maxLines: null,
@@ -46,7 +44,7 @@ Widget inputField(
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide.none,
             ),
-            contentPadding: EdgeInsets.zero,
+            contentPadding: EdgeInsets.only(left: 10),
           ),
         ),
       ),
@@ -92,7 +90,7 @@ Widget normalInputField(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(placeholderText, style: kBold18),
+      Text(placeholderText, style: placeholderTextStyle),
       SizedBox(height: 10),
       explanatoryText != ''
           ? Text(explanatoryText, style: kGrey16)
@@ -171,20 +169,21 @@ Widget signButton(String _btnText, _func) {
       color: kPrimaryColor,
       shape: RoundedRectangleBorder(
         side: BorderSide.none,
-        borderRadius: BorderRadius.circular(60),
+        borderRadius: BorderRadius.circular(4),
       ),
       onPressed: _func,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             _btnText,
             style: TextStyle(color: Colors.white),
           ),
           SizedBox(width: 10),
-          Icon(
-            LineIcons.check,
-            color: Colors.white,
-          ),
+          // Icon(
+          //   LineIcons.check,
+          //   color: Colors.white,
+          // ),
         ],
       ),
     ),
@@ -202,6 +201,21 @@ Widget sideDrawerItem(String _text, Icon _icon, Function _func) {
           SizedBox(width: 8),
           Text(_text, style: kFont16),
         ],
+      ),
+    ),
+  );
+}
+
+Widget sectionDescription(String _text) {
+  return Container(
+    padding: EdgeInsets.all(8),
+    margin: EdgeInsets.only(top: 10),
+    child: Text(
+      _text,
+      style: TextStyle(
+        fontSize: 15,
+        color: Get.isDarkMode ? Colors.grey : Colors.black,
+        fontWeight: FontWeight.bold,
       ),
     ),
   );
@@ -279,61 +293,111 @@ class MessageTile extends StatefulWidget {
 class _MessageTileState extends State<MessageTile> {
   int _num = 0;
   var roomVisitTime;
+  var lastMessageTime;
   String lastRoomMessage = '...';
   String lastRoomMessageSenderId = '';
 
+  // _getRoomData() async {
+  //   var _roomId = await getRoomId(widget._userId);
+
+  //   await kChatRoomsRef
+  //       .doc(_roomId)
+  //       .collection('RoomLogs')
+  //       .doc(kMyId)
+  //       .snapshots()
+  //       .forEach((element) {
+  //     if (mounted) {
+  //       setState(() {
+  //         roomVisitTime = element.data()['roomVisitTime'];
+  //       });
+  //     }
+
+  //     _getUnread();
+
+  //     kChatRoomsRef.doc(_roomId).snapshots().forEach((element) {
+  //       if (mounted) {
+  //         setState(() {
+  //           lastRoomMessage = element.data()['lastRoomMessage'];
+  //           lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
+  //           lastMessageTime = element.data()['lastMessageTime'];
+  //         });
+  //       }
+  //     });
+
+  //     // kClubChatRoomsRef
+  //     //     .doc(widget._userId)
+  //     //     .collection('RoomMessages')
+  //     //     .where('sendTime', isGreaterThan: roomVisitTime)
+  //     //     .snapshots()
+  //     //     .listen((event) {
+  //     //   if (mounted) {
+  //     //     setState(() {
+  //     //       _num = event.docs.length;
+  //     //     });
+  //     //   }
+  //     // });
+
+  //     //get unread count
+  //   });
+  // }
+
+  // var _newProfilePhoto = CircleAvatar(
+  //                 radius: 25,
+  //                 backgroundColor:
+  //                     Get.isDarkMode ? Colors.black : Colors.grey[100],
+  //                 backgroundImage: NetworkImage(widget._profilePhoto),
+  //               );
+
+  var _newProfilePhoto;
+
   _getRoomData() async {
+    var _roomId = await getRoomId(widget._userId);
+
+    kChatRoomsRef.doc(_roomId).snapshots().forEach((element) {
+      if (mounted) {
+        setState(() {
+          lastRoomMessage = element.data()['lastRoomMessage'];
+          lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
+          lastMessageTime = element.data()['lastMessageTime'];
+        });
+      }
+    });
+  }
+
+  _getLastRoomVisitTime() async {
     var _roomId = await getRoomId(widget._userId);
 
     await kChatRoomsRef
         .doc(_roomId)
         .collection('RoomLogs')
         .doc(kMyId)
-        .snapshots()
-        .forEach((element) {
+        .get()
+        .then((doc) {
       if (mounted) {
         setState(() {
-          roomVisitTime = element.data()['roomVisitTime'];
+          roomVisitTime = doc.data()['roomVisitTime'];
         });
       }
+    });
 
-      kChatRoomsRef.doc(_roomId).snapshots().forEach((element) {
-        if (mounted) {
-          setState(() {
-            lastRoomMessage = element.data()['lastRoomMessage'];
-            lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
-          });
-        }
-      });
+    _getUnread();
+  }
 
-      // kClubChatRoomsRef
-      //     .doc(widget._userId)
-      //     .collection('RoomMessages')
-      //     .where('sendTime', isGreaterThan: roomVisitTime)
-      //     .snapshots()
-      //     .listen((event) {
-      //   if (mounted) {
-      //     setState(() {
-      //       _num = event.docs.length;
-      //     });
-      //   }
-      // });
+  _getUnread() async {
+    var _roomId = await getRoomId(widget._userId);
 
-      kChatRoomsRef
-          .doc(_roomId)
-          .collection('RoomMessages')
-
-          // TODO get unread counter on messages i didnt send
-          // .where('sender', isNotEqualTo: kMyName)
-          .where('sendTime', isGreaterThan: roomVisitTime)
-          .get()
-          .then((value) {
-        if (mounted) {
-          setState(() {
-            _num = value.docs.length;
-          });
-        }
-      });
+    kChatRoomsRef
+        .doc(_roomId)
+        .collection('RoomMessages')
+        // .where('senderId', isEqualTo: kMyId != true)
+        .where('sendTime', isGreaterThan: roomVisitTime)
+        .snapshots()
+        .listen((event) {
+      if (mounted) {
+        setState(() {
+          _num = event.docs.length;
+        });
+      }
     });
   }
 
@@ -341,19 +405,28 @@ class _MessageTileState extends State<MessageTile> {
   void initState() {
     super.initState();
     _getRoomData();
+    _getLastRoomVisitTime();
+
+    _newProfilePhoto = NetworkImage(widget._profilePhoto);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(_newProfilePhoto, context);
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime myDateTime =
-        roomVisitTime != null ? roomVisitTime.toDate() : DateTime.now();
+        lastMessageTime != null ? lastMessageTime.toDate() : DateTime.now();
     String _convertedTime = DateFormat('K:mm').format(myDateTime);
 
     return Container(
-      // height: 200,
       child: Column(
         children: [
           ListTile(
+            horizontalTitleGap: 10,
             onTap: () => Get.to(
               MessagingScreen(
                 widget._name,
@@ -361,7 +434,7 @@ class _MessageTileState extends State<MessageTile> {
                 widget._userId,
               ),
             ),
-            contentPadding: EdgeInsets.fromLTRB(10, 3, 10, 3),
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
             title: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -371,11 +444,16 @@ class _MessageTileState extends State<MessageTile> {
                   style: TextStyle(
                     fontSize: 15,
                     color: Get.isDarkMode ? Colors.white : Colors.black,
+                    fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 Text(
                   _convertedTime,
-                  style: kGrey13,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -389,37 +467,36 @@ class _MessageTileState extends State<MessageTile> {
               ),
               child: Hero(
                 tag: widget._userId,
-                child: Container(
-                  height: 55,
-                  width: 55,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    color: Get.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                    image: DecorationImage(
-                      image: NetworkImage(widget._profilePhoto),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                child: CircleAvatar(
+                  radius: 25,
+                  backgroundImage: _newProfilePhoto,
+                  backgroundColor:
+                      Get.isDarkMode ? Colors.black : Colors.grey[100],
                 ),
               ),
             ),
             subtitle: Column(
               children: [
-                SizedBox(height: 10),
+                SizedBox(height: 3),
                 Container(
-                  height: 20,
+                  // height: 20,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
-                        child: Text(
-                          lastRoomMessageSenderId != kMyId
-                              ? lastRoomMessage
-                              : 'You: $lastRoomMessage',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                          style: TextStyle(
-                            color: Colors.grey,
+                      Container(
+                        child: Flexible(
+                          child: Text(
+                            lastRoomMessageSenderId != kMyId
+                                ? lastRoomMessage
+                                : 'You: $lastRoomMessage',
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: _num > 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
                         ),
                       ),
@@ -430,11 +507,12 @@ class _MessageTileState extends State<MessageTile> {
                                 horizontal: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: kPrimaryColor,
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: Text(
                                 '$_num',
+                                // '1',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -476,10 +554,9 @@ class ClubMessageTile extends StatefulWidget {
 
 class ClubMessageTileState extends State<ClubMessageTile> {
   int _num = 0;
-  var roomVisitTime;
-  var lastRoomMessageTime;
-  String lastRoomMessage = '';
-  String lastRoomMessageSenderId = '';
+  var _roomVisitTime;
+  var _lastRoomMessageTime;
+  String _lastRoomMessage = '...';
 
   _getRoomData() async {
     await kClubChatRoomsRef
@@ -490,41 +567,38 @@ class ClubMessageTileState extends State<ClubMessageTile> {
         .forEach((element) {
       if (mounted) {
         setState(() {
-          roomVisitTime = element.data()['roomVisitTime'];
+          _roomVisitTime = element.data()['roomVisitTime'];
         });
       }
 
       kClubChatRoomsRef.doc(widget._clubId).snapshots().forEach((element) {
         if (mounted) {
           setState(() {
-            lastRoomMessage = element.data()['lastRoomMessage'];
-            lastRoomMessageTime = element.data()['lastRoomMessageTime'];
-            lastRoomMessageSenderId = element.data()['lastRoomMessageSenderId'];
+            _lastRoomMessage = element.data()['lastRoomMessage'];
+            _lastRoomMessageTime = element.data()['lastRoomMessageTime'];
           });
         }
       });
 
-      //get unred count
-      kClubChatRoomsRef
-          .doc(widget._clubId)
-          .collection('RoomMessages')
-          .where('sendTime', isGreaterThan: roomVisitTime)
-          .snapshots()
-          .listen((event) {
-        if (mounted) {
-          setState(() {
-            _num = event.docs.length;
-          });
-        }
-      });
+      //get unread count
+      // kClubChatRoomsRef
+      //     .doc(widget._clubId)
+      //     .collection('RoomMessages')
+      //     .where('sendTime', isGreaterThan: roomVisitTime)
+      //     .snapshots()
+      //     .listen((event) {
+      //   if (mounted) {
+      //     setState(() {
+      //       _num = event.docs.length;
+      //     });
+      //   }
+      // });
 
-      //TODO made a change
+      //get unread count
       kClubChatRoomsRef
           .doc(widget._clubId)
           .collection('RoomMessages')
-          // .where('sender', isNotEqualTo: kMyName)
-          .where('sendTime', isGreaterThan: roomVisitTime)
-          // .snapshots().length
+          .where('sendTime', isGreaterThan: _roomVisitTime)
           .get()
           .then((value) {
         if (mounted) {
@@ -536,16 +610,25 @@ class ClubMessageTileState extends State<ClubMessageTile> {
     });
   }
 
+  var _newProfilePhoto;
+
   @override
   void initState() {
     super.initState();
     _getRoomData();
+    _newProfilePhoto = NetworkImage(widget._profilePhoto);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(_newProfilePhoto, context);
   }
 
   @override
   Widget build(BuildContext context) {
-    DateTime myDateTime = lastRoomMessageTime != null
-        ? lastRoomMessageTime.toDate()
+    DateTime myDateTime = _lastRoomMessageTime != null
+        ? _lastRoomMessageTime.toDate()
         : DateTime.now();
     String _convertedTime = DateFormat('K:mm').format(myDateTime);
 
@@ -553,6 +636,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
       child: Column(
         children: [
           ListTile(
+            horizontalTitleGap: 10,
             onTap: () => Get.to(
               ClubMessagingScreen(
                 widget._clubId,
@@ -562,7 +646,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                 widget._clubCategory,
               ),
             ),
-            contentPadding: EdgeInsets.fromLTRB(10, 3, 10, 3),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10),
             title: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -572,11 +656,16 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                   style: TextStyle(
                     fontSize: 15,
                     color: Get.isDarkMode ? Colors.white : Colors.black,
+                    fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 Text(
                   _convertedTime,
-                  style: kGrey13,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -590,37 +679,39 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                   widget._clubCategory,
                 ),
               ),
-              child: Container(
-                height: 55,
-                width: 55,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(100),
-                  color: Get.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                  image: DecorationImage(
-                    image: NetworkImage(widget._profilePhoto),
-                    fit: BoxFit.cover,
-                  ),
+              child: Hero(
+                tag: widget._clubId,
+                child: CircleAvatar(
+                  radius: 25,
+                  backgroundImage: _newProfilePhoto,
+                  backgroundColor:
+                      Get.isDarkMode ? Colors.black : Colors.grey[100],
                 ),
               ),
             ),
             subtitle: Column(
               children: [
-                SizedBox(height: 10),
+                SizedBox(height: 3),
                 Container(
-                  height: 20,
+                  // height: 20,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
-                        child: Text(
-                          // lastRoomMessageSenderId != kMyId
-                          //     ? 'lastRoomMessage'
-                          //     : 'You: $lastRoomMessage',
-                          '$lastRoomMessage',
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                          style: TextStyle(
-                            color: Colors.grey,
+                      Container(
+                        child: Flexible(
+                          child: Text(
+                            // lastRoomMessageSenderId != kMyId
+                            //     ? 'lastRoomMessage'
+                            //     : 'You: $lastRoomMessage',
+                            '$_lastRoomMessage',
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: _num > 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
                         ),
                       ),
@@ -631,7 +722,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                                 horizontal: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: kPrimaryColor,
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: Text(
@@ -669,10 +760,11 @@ Widget userTile(
     child: Column(
       children: [
         ListTile(
+          horizontalTitleGap: 10,
           onTap: () => Get.to(
             UserScreen(_userId, _profilePhoto, _name),
           ),
-          contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          contentPadding: EdgeInsets.symmetric(horizontal: 10),
           title: Text(
             _name,
             style: TextStyle(
@@ -682,17 +774,10 @@ Widget userTile(
           ),
           leading: Hero(
             tag: _userId,
-            child: Container(
-              height: 55,
-              width: 55,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
-                image: DecorationImage(
-                  image: NetworkImage(_profilePhoto),
-                  fit: BoxFit.cover,
-                ),
-              ),
+            child: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.grey[100],
+              backgroundImage: NetworkImage(_profilePhoto),
             ),
           ),
           subtitle: Text(
@@ -725,6 +810,55 @@ Widget userTile(
   );
 }
 
+// Widget forwardUserTile(
+//   String _name,
+//   _profilePhoto,
+//   _roomId,
+//   _interestOne,
+//   _interestTwo,
+//   _interestThree,
+// ) {
+//   _forward() {}
+
+//   return Container(
+//     child: Column(
+//       children: [
+//         ListTile(
+//           horizontalTitleGap: 10,
+//           contentPadding: EdgeInsets.symmetric(horizontal: 10),
+//           title: Text(
+//             _name,
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: Get.isDarkMode ? Colors.white : Colors.black,
+//             ),
+//           ),
+//           leading: CircleAvatar(
+//             backgroundColor: Colors.grey[100],
+//             backgroundImage: NetworkImage(_profilePhoto),
+//           ),
+//           subtitle: Text(
+//             'Likes $_interestOne, $_interestTwo, $_interestThree',
+//             overflow: TextOverflow.ellipsis,
+//             softWrap: true,
+//             style: TextStyle(
+//               color: Colors.grey,
+//               // fontFamily: kDefaultFont,
+//             ),
+//           ),
+//           trailing: Container(
+//             // width: 120,
+//             child: textButton(
+//               'Send ...',
+//               () => _forward(),
+//             ),
+//           ),
+//         ),
+//       ],
+//     ),
+//   );
+// }
+
 Widget groupTile(
   String _name,
   String _profilePhoto,
@@ -736,6 +870,7 @@ Widget groupTile(
     child: Column(
       children: [
         ListTile(
+          horizontalTitleGap: 10,
           onTap: () => Get.to(
             ClubInfoScreen(
               _clubId,
@@ -745,7 +880,7 @@ Widget groupTile(
               _clubCategory,
             ),
           ),
-          contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+          contentPadding: EdgeInsets.symmetric(horizontal: 10),
           title: Text(
             _name,
             style: TextStyle(
@@ -755,17 +890,10 @@ Widget groupTile(
           ),
           leading: Hero(
             tag: _clubId,
-            child: Container(
-              height: 60,
-              width: 55,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
-                image: DecorationImage(
-                  image: NetworkImage(_profilePhoto),
-                  fit: BoxFit.cover,
-                ),
-              ),
+            child: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.grey[100],
+              backgroundImage: NetworkImage(_profilePhoto),
             ),
           ),
           subtitle: Text(
@@ -780,21 +908,6 @@ Widget groupTile(
           trailing: Icon(
             CupertinoIcons.chevron_forward,
           ),
-          // trailing: Container(
-          //   decoration: BoxDecoration(
-          //     borderRadius: BorderRadius.circular(100),
-          //     color: Colors.grey[200],
-          //   ),
-          //   child: colorRoundButton(
-          //     Icon(
-          //       CupertinoIcons.bubble_left_fill,
-          //       color: kPrimaryColor,
-          //     ),
-          //     () => Get.to(
-          //       MessagingScreen(_name, _profilePhoto, _clubId),
-          //     ),
-          //   ),
-          // ),
         ),
         // Divider(),
       ],
@@ -1010,6 +1123,28 @@ Widget textIconRoundButton(Icon _icon, String _btnText, Function _func) {
   );
 }
 
+Widget textButton(String _btnText, Function _func) {
+  return GestureDetector(
+    onTap: _func,
+    child: Container(
+      height: 33,
+      child: MaterialButton(
+        elevation: 0,
+        color: !Get.isDarkMode ? kPrimaryColor.withOpacity(0.2) : Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide.none,
+          borderRadius: BorderRadius.circular(40),
+        ),
+        onPressed: _func,
+        child: Text(
+          _btnText,
+          style: TextStyle(color: kPrimaryColor),
+        ),
+      ),
+    ),
+  );
+}
+
 Widget colorRoundButton(Icon _icon, Function _pressed) {
   return Container(
     decoration: BoxDecoration(
@@ -1023,18 +1158,41 @@ Widget colorRoundButton(Icon _icon, Function _pressed) {
   );
 }
 
+Widget textColorRoundButton(Icon _icon, String _text, _pressed) {
+  return Container(
+    margin: EdgeInsets.symmetric(
+      horizontal: 7,
+    ),
+    child: Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
+          ),
+          child: IconButton(
+            icon: _icon,
+            onPressed: _pressed,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          _text,
+          style: TextStyle(color: Colors.grey),
+        ),
+      ],
+    ),
+  );
+}
+
 Widget fakeSearchBox() {
   return GestureDetector(
     onTap: () => Get.to(SearchScreen()),
     child: Container(
-      height: 40,
+      height: 60,
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: !Get.isDarkMode ? Colors.grey[200] : kDarkBodyThemeBlack,
-        // border: Border.all(
-        //   color: Colors.grey[200],
-        //   width: 1,
-        // ),
+        color: !Get.isDarkMode ? Colors.grey[200] : Colors.black,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Center(
@@ -1043,12 +1201,12 @@ Widget fakeSearchBox() {
           children: [
             Icon(
               CupertinoIcons.search,
-              color: Colors.grey[400],
+              color: Colors.grey[500],
               size: 19,
             ),
             SizedBox(width: 10),
             Text(
-              'Search for messages',
+              'Search for chats',
               style: kGrey14,
               // textAlign: TextAlign.center,
             ),
@@ -1083,7 +1241,7 @@ class MessageItem extends StatefulWidget {
   final String _senderId;
   final String _senderName;
   final String _senderProfileImage;
-  final String _messageImage;
+  final List _messageImage;
   final String _messageType;
   final String _messageId;
   final String _roomId;
@@ -1110,7 +1268,7 @@ class _MessageItemState extends State<MessageItem> {
   showMessageItemSheet() {
     Get.bottomSheet(
       Container(
-        // height: 140,
+        height: 260,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
@@ -1147,45 +1305,56 @@ class _MessageItemState extends State<MessageItem> {
                   )
                 : Container(),
             SizedBox(height: 20),
-            widget._messageImage != null
-                ? bottomSheetItem(
-                    Icon(Icons.download_outlined, color: kPrimaryColor),
-                    'Download photo',
-                    () {
-                      final roomMessagesRef = kChatRoomsRef
-                          .doc(widget._roomId)
-                          .collection('RoomMessages');
+            // widget._messageImage != null
+            //     ? bottomSheetItem(
+            //         Icon(Icons.download_outlined, color: kPrimaryColor),
+            //         'Download photo',
+            //         () {
+            //           final roomMessagesRef = kChatRoomsRef
+            //               .doc(widget._roomId)
+            //               .collection('RoomMessages');
 
-                      if (widget._senderId == kMyId)
-                        roomMessagesRef.doc(widget._messageId).delete();
+            //           if (widget._senderId == kMyId)
+            //             roomMessagesRef.doc(widget._messageId).delete();
 
-                      Get.back();
-                    },
-                  )
-                : Container(),
+            //           Get.back();
+            //         },
+            //       )
+            //     : Container(),
             SizedBox(height: 20),
-            decryptedMessage != null ||
-                    decryptedMessage == '' && widget._messageImage == null
-                ? bottomSheetItem(
-                    Icon(Icons.copy, color: kPrimaryColor),
-                    'Copy message text',
-                    () {
-                      final roomMessagesRef = kChatRoomsRef
-                          .doc(widget._roomId)
-                          .collection('RoomMessages');
+            // widget._messageText != null ||
+            //         widget._messageText == '' && widget._messageImage == null
+            //     ? bottomSheetItem(
+            //         Icon(Icons.copy, color: kPrimaryColor),
+            //         'Copy message text',
+            //         () {
+            //           final roomMessagesRef = kChatRoomsRef
+            //               .doc(widget._roomId)
+            //               .collection('RoomMessages');
 
-                      if (widget._senderId == kMyId)
-                        roomMessagesRef.doc(widget._messageId).delete();
+            //           if (widget._senderId == kMyId)
+            //             roomMessagesRef.doc(widget._messageId).delete();
 
-                      Get.back();
-                    },
-                  )
-                : Container(),
+            //           Get.back();
+            //         },
+            //       )
+            //     : Container(),
             SizedBox(height: 20),
             bottomSheetItem(
               Icon(Icons.forward, color: kPrimaryColor),
               'Forward...',
-              () {},
+              () => Get.to(ForwardToScreen(
+                widget._messageText,
+                widget._messageTimeStamp,
+                widget._senderId,
+                widget._senderName,
+                widget._senderProfileImage,
+                widget._messageImage,
+                widget._messageType,
+                widget._messageId,
+                widget._roomId,
+                widget._isClub,
+              )),
             ),
           ],
         ),
@@ -1193,47 +1362,16 @@ class _MessageItemState extends State<MessageItem> {
     );
   }
 
-  String decryptedMessage = '';
-
-  decryptMessage() {
-    final key = Key.fromLength(32);
-    final iv = IV.fromLength(16);
-    final encrypter = Encrypter(AES(key));
-
-    var plainMessageText = widget._messageText;
-    final decrypted = encrypter.decrypt64(plainMessageText, iv: iv);
-
-    print(decrypted);
-
-    if (mounted) {
-      setState(() {
-        decryptedMessage = decrypted;
-      });
-    }
-  }
-
-  rawTextMessage() {
-    if (mounted) {
-      setState(() {
-        decryptedMessage = widget._messageText;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    widget._isClub ? rawTextMessage() : decryptMessage();
-  }
-
   @override
   Widget build(BuildContext context) {
-    DateTime myDateTime = widget._messageTimeStamp.toDate();
-    String dateString = DateFormat('K:mm').format(myDateTime);
     var myMessage = widget._senderId == kMyId;
 
+    DateTime myDateTime = widget._messageTimeStamp != null
+        ? widget._messageTimeStamp.toDate()
+        : DateTime.now();
+    String dateString = DateFormat('K:mm').format(myDateTime);
+
     return GestureDetector(
-      onTap: () => decryptMessage(),
       onLongPress: () => showMessageItemSheet(),
       child: Column(
         crossAxisAlignment:
@@ -1241,111 +1379,152 @@ class _MessageItemState extends State<MessageItem> {
         children: [
           SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment:
                 myMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
             children: [
               !myMessage
-                  ? CircleAvatar(
-                      radius: 13,
-                      backgroundColor: Colors.grey[100],
-                      backgroundImage: NetworkImage(widget._senderProfileImage),
+                  ? GestureDetector(
+                      onTap: () => Get.to(
+                        UserScreen(
+                          widget._senderId,
+                          widget._senderProfileImage,
+                          widget._senderName,
+                        ),
+                      ),
+                      child: Hero(
+                        tag: widget._senderId,
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey[100],
+                          backgroundImage:
+                              NetworkImage(widget._senderProfileImage),
+                        ),
+                      ),
                     )
                   : Container(),
               SizedBox(width: 10),
-              decryptedMessage == null || decryptedMessage == ''
-                  // decryptedMessage == 'Sent a photo'
+              widget._messageText == 'null check' || widget._messageText == ''
                   ? Container()
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: myMessage ? kPrimaryColor : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(17),
-                          ),
-                          constraints: BoxConstraints(
-                            maxWidth:
-                                MediaQuery.of(context).size.width / 2 + 100,
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 14,
-                          ),
-                          child: Text(
-                            decryptedMessage,
-                            style: TextStyle(
-                              color: myMessage ? Colors.white : Colors.black,
-                              fontSize: 15,
+                  : Flexible(
+                      child: Column(
+                        crossAxisAlignment: myMessage
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color:
+                                  myMessage ? kPrimaryColor : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(17),
                             ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Text(
-                              widget._senderName == kMyName
-                                  ? ''
-                                  : widget._senderName,
+                            constraints: BoxConstraints(
+                              maxWidth:
+                                  MediaQuery.of(context).size.width / 2 + 100,
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 14,
+                            ),
+                            child: Text(
+                              widget._messageText,
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[400],
+                                color: myMessage ? Colors.white : Colors.black,
+                                fontSize: 15,
+                                height: 1.5,
                               ),
                             ),
-                            SizedBox(width: 7),
-                            Text(
-                              dateString,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: myMessage
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget._senderName == kMyName
+                                    ? ''
+                                    : widget._senderName,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[400],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              SizedBox(width: 7),
+                              Text(
+                                dateString,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
             ],
           ),
-          widget._messageType == 'photoMessage' && widget._messageImage != null
-              ? Container(
-                  padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
-                  margin: EdgeInsets.only(top: 10),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width / 2 + 100,
-                  ),
-                  child: GestureDetector(
-                    onTap: () => Get.to(
-                      ViewPhotoScreen(widget._messageImage),
-                    ),
-                    child: ExtendedImage.network(
-                      widget._messageImage,
-                      fit: BoxFit.fill,
-                      cache: true,
-                      loadStateChanged: (ExtendedImageState state) {
-                        switch (state.extendedImageLoadState) {
-                          case LoadState.loading:
-                            return Container(
-                              height: 200,
-                              width:
-                                  MediaQuery.of(context).size.width / 2 + 100,
-                              color: Colors.grey[100],
-                            );
-                            break;
+          widget._messageImage.length > 0
+              ? Column(
+                  children: [
+                    for (var image in widget._messageImage)
+                      // widget._messageImage.length > 0
+                      Container(
+                        // padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                        margin: EdgeInsets.only(top: 5),
+                        // constraints: BoxConstraints(
+                        //   maxWidth: MediaQuery.of(context).size.width / 2 + 100,
+                        // ),
+                        height: 300,
+                        width: 300,
+                        // color: Colors.grey[700],
+                        child: GestureDetector(
+                          onTap: () => Get.to(
+                            ViewPhotoScreen(image),
+                          ),
+                          child: ExtendedImage.network(
+                            image,
+                            fit: BoxFit.fill,
+                            cache: true,
+                            // borderRadius: BorderRadius.circular(200),
+                            // height: 300,
+                            // width: 300,
+                            loadStateChanged: (ExtendedImageState state) {
+                              switch (state.extendedImageLoadState) {
+                                case LoadState.loading:
+                                  return Container(
+                                    height: 200,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2 +
+                                            100,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Center(
+                                      child: myLoader(),
+                                    ),
+                                  );
+                                  break;
 
-                          case LoadState.completed:
-                            return ExtendedRawImage(
-                              image: state.extendedImageInfo?.image,
-                            );
-                            break;
-                          case LoadState.failed:
-                            state.reLoadImage();
-                            return Text('');
-                            break;
-                        }
+                                case LoadState.completed:
+                                  return ExtendedRawImage(
+                                    image: state.extendedImageInfo?.image,
+                                  );
+                                  break;
+                                case LoadState.failed:
+                                  state.reLoadImage();
+                                  return Text('');
+                                  break;
+                              }
 
-                        return Text('');
-                      },
-                    ),
-                  ),
+                              return Text('');
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
                 )
               : Container(),
           SizedBox(height: 15),
@@ -1376,7 +1555,7 @@ Widget noDataSnapshotMessage(String _bigText, _smallWidget) {
   );
 }
 
-Widget noRoomChatsMessage(String _imgUrl, _name) {
+Widget noRoomChatsMessage(String _imgUrl, String _name, String _userId) {
   return Padding(
     padding: EdgeInsets.fromLTRB(30, 30, 30, 20),
     child: Center(
@@ -1396,13 +1575,20 @@ Widget noRoomChatsMessage(String _imgUrl, _name) {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
-                child: Text(
-                  'Your conversation with $_name is \n end-to-end encrypted',
-                  style: TextStyle(
-                    color: Colors.lightGreen,
-                    fontSize: 15,
+                child: Container(
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(5),
                   ),
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    'Your conversation with $_name is \n end-to-end encrypted',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ],
@@ -1451,25 +1637,6 @@ Widget fillInMessageTile() {
       kMyName,
       kMyProfileImage,
       kMyId,
-    ),
-  );
-}
-
-Widget clubInfoButton(String _text, Icon _icon, Function _func) {
-  return Container(
-    margin: EdgeInsets.only(bottom: 10),
-    color: Get.isDarkMode ? Colors.grey[900] : Colors.grey[100],
-    padding: EdgeInsets.all(10),
-    child: GestureDetector(
-      onTap: _func,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _icon,
-          SizedBox(width: 5),
-          Text(_text),
-        ],
-      ),
     ),
   );
 }
