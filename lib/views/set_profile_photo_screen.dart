@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
-import 'package:reflex/views/home_init.dart';
 import 'package:reflex/views/home_screen.dart';
 import 'package:reflex/widgets/widget.dart';
 

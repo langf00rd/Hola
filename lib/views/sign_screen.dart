@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
-import 'package:reflex/views/home_init.dart';
 import 'package:reflex/views/home_screen.dart';
 import 'package:reflex/views/set_profile_photo_screen.dart';
 import 'package:reflex/widgets/widget.dart';
@@ -142,10 +141,7 @@ class _SignScreenState extends State<SignScreen> {
                     children: [
                       SizedBox(height: 20),
                       Center(
-                        child: CircleAvatar(
-                          radius: 70,
-                          backgroundColor: Colors.grey[100],
-                        ),
+                        child: Image.asset('./assets/appLogo.png'),
                       ),
                       SizedBox(height: 20),
                       Container(

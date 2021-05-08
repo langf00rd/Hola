@@ -72,12 +72,14 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
             ),
           ),
           body: Container(
-            padding: EdgeInsets.fromLTRB(10, 0, 10, 10),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  searchBox(),
+                  Container(
+                    padding: EdgeInsets.fromLTRB(10, 0, 10, 10),
+                    child: searchBox(),
+                  ),
                   SizedBox(height: 10),
                   Container(
                     padding: EdgeInsets.all(10),

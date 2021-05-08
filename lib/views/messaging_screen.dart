@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart' hide Key;
 import 'package:flutter/material.dart' hide Key;
 import 'package:get/get.dart';
@@ -69,94 +66,10 @@ class _MessagingScreenState extends State<MessagingScreen> {
     }
   }
 
-  Future _pickImages() async {
-    FilePickerResult result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'jpeg', 'gif'],
-    );
-
-    if (result != null) {
-      List<File> files = result.paths.map((path) => File(path)).toList();
-      setState(() {});
-      print(files.length);
-
-      _uploadImages(files);
-
-      Get.back();
-      Timer(
-        Duration(milliseconds: 1),
-        () => _controller.jumpTo(_controller.position.maxScrollExtent),
-      );
-    } else {
-      // User canceled the picker
-    }
-  }
-
-  Future _uploadImages(List<File> _files) async {
-    if (mounted) {
-      setState(() {
-        loading = true;
-      });
-    }
-
-    List _allUrls = [];
-
-    try {
-      for (int i = 0; i < _files.length; i++) {
-        print(i);
-
-        String filePath = 'imagePosts/${DateTime.now()}.jpg';
-
-        FirebaseStorage storage = FirebaseStorage.instance;
-
-        UploadTask uploadTask =
-            storage.ref().child(filePath).putFile(_files[i]);
-
-        TaskSnapshot taskSnapshot = await uploadTask;
-
-        if (mounted) {
-          setState(() {
-            var t = taskSnapshot.bytesTransferred.toInt();
-            var q = taskSnapshot.totalBytes.toInt();
-
-            percentage = taskSnapshot.bytesTransferred;
-          });
-        }
-
-        await uploadTask.whenComplete(() => print('complete upload'));
-
-        String imageUrl = await taskSnapshot.ref.getDownloadURL();
-
-        _allUrls.add(imageUrl);
-      }
-
-      if (mounted) {
-        setState(() {
-          loading = false;
-        });
-      }
-
-      await sendPhoto(_allUrls, _roomId, false);
-
-      await updateRoomLastInfo(_roomId, '🌄 Sent a photo');
-    } catch (e) {
-      print(e);
-
-      singleButtonDialogue(e);
-
-      if (mounted) {
-        setState(() {
-          loading = false;
-        });
-      }
-    }
-  }
-
   plusButtonSheet() {
     Get.bottomSheet(
       Container(
-        height: 260,
+        height: 200,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
@@ -168,35 +81,36 @@ class _MessagingScreenState extends State<MessagingScreen> {
         child: Column(
           children: [
             bottomSheetItem(
-              Icon(CupertinoIcons.photo, color: kPrimaryColor),
-              'Share photo',
-              () => _pickImages(),
-            ),
-            SizedBox(height: 20),
-            bottomSheetItem(
-              Icon(CupertinoIcons.camera, color: kPrimaryColor),
-              'Open camera',
-              () => _pickImages(),
-            ),
-            SizedBox(height: 20),
+                Icon(CupertinoIcons.photo, color: kPrimaryColor), 'Share photo',
+                () async {
+              if (mounted) {
+                setState(() {
+                  loading = true;
+                });
+              }
+              await pickImages(_roomId, false).then((value) {
+                if (mounted) {
+                  setState(() {
+                    // loading = false;
+                  });
+                }
+              });
+            }),
             bottomSheetItem(
               Icon(CupertinoIcons.keyboard, color: kPrimaryColor),
               'Use voice typing',
               () {},
             ),
-            SizedBox(height: 20),
             bottomSheetItem(
               Icon(CupertinoIcons.folder, color: kPrimaryColor),
               'Send a file',
               () {},
             ),
-            SizedBox(height: 20),
             bottomSheetItem(
               Icon(CupertinoIcons.smiley, color: kPrimaryColor),
               'Share sticker / GIF',
               () {},
             ),
-            SizedBox(height: 20),
           ],
         ),
       ),
@@ -248,7 +162,12 @@ class _MessagingScreenState extends State<MessagingScreen> {
     super.initState();
     checkRoomExist();
     _roomId = getRoomId(widget._userId);
-    updateLastRoomVisitTime(_roomId);
+
+    kChatRoomsRef.doc(_roomId).collection('RoomLogs').doc(kMyId).update({
+      'token': kMyNotificationToken,
+      'roomVisitTime': DateTime.now().toUtc(),
+    }).then((value) => print('done'));
+
     _getTypingState();
 
     messagesStreamBuilder = StreamBuilder<QuerySnapshot>(
@@ -443,7 +362,6 @@ class _MessagingScreenState extends State<MessagingScreen> {
                         child: Icon(
                           CupertinoIcons.smiley,
                           size: 25,
-                          // color: Colors.grey,
                         ),
                       ),
                     ),
@@ -481,7 +399,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
 
                             setTypingState(isTyping, _roomId);
 
-                            Timer(Duration(seconds: 2), () {
+                            Timer(Duration(seconds: 3), () {
                               if (mounted) {
                                 setState(() {
                                   isTyping = false;

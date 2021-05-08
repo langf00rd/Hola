@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
-import 'package:reflex/views/customize_screen.dart';
 import 'package:reflex/views/edit_profile.dart';
+import 'package:reflex/views/new_message.dart';
 import 'package:reflex/views/search_screen.dart';
 import 'package:reflex/views/sign_screen.dart';
 import 'package:reflex/views/start_club.dart';
@@ -156,29 +156,9 @@ class _MyState extends State<My> {
                 ),
                 SizedBox(height: 20),
                 Container(
-                  padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+                  padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
                   child: Column(
                     children: [
-                      // textIconRoundButton(
-                      //             Icon(
-                      //               CupertinoIcons.pen,
-                      //               color: kPrimaryColor,
-                      //             ),
-                      //             'Edit account info',
-                      //             () {},
-                      //           ),
-                      //
-                      //
-                      sideDrawerItem(
-                          'Customize app interface',
-                          Icon(
-                            CupertinoIcons.paintbrush,
-                            // color: Colors.black,
-                          ), () {
-                        Get.to(
-                          CustomizeScreen(),
-                        );
-                      }),
                       sideDrawerItem(
                           'Start a club',
                           Icon(
@@ -195,16 +175,7 @@ class _MyState extends State<My> {
                             CupertinoIcons.plus_bubble,
                           ), () {
                         Get.to(
-                          CustomizeScreen(),
-                        );
-                      }),
-                      sideDrawerItem(
-                          'Share an update',
-                          Icon(
-                            CupertinoIcons.timer,
-                          ), () {
-                        Get.to(
-                          CustomizeScreen(),
+                          NewMessageScreen(),
                         );
                       }),
                       sideDrawerItem(

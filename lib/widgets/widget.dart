@@ -362,25 +362,27 @@ class _MessageTileState extends State<MessageTile> {
         });
       }
     });
+
+    await _getLastRoomVisitTime();
   }
 
   _getLastRoomVisitTime() async {
     var _roomId = await getRoomId(widget._userId);
 
-    await kChatRoomsRef
+    kChatRoomsRef
         .doc(_roomId)
         .collection('RoomLogs')
         .doc(kMyId)
-        .get()
-        .then((doc) {
+        .snapshots()
+        .listen((event) {
       if (mounted) {
         setState(() {
-          roomVisitTime = doc.data()['roomVisitTime'];
+          roomVisitTime = event.data()['roomVisitTime'];
         });
       }
-    });
 
-    _getUnread();
+      _getUnread();
+    });
   }
 
   _getUnread() async {
@@ -405,7 +407,6 @@ class _MessageTileState extends State<MessageTile> {
   void initState() {
     super.initState();
     _getRoomData();
-    _getLastRoomVisitTime();
 
     _newProfilePhoto = NetworkImage(widget._profilePhoto);
   }
@@ -492,7 +493,7 @@ class _MessageTileState extends State<MessageTile> {
                             overflow: TextOverflow.ellipsis,
                             softWrap: true,
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: _num > 0 ? Colors.black : Colors.grey,
                               fontWeight: _num > 0
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -707,7 +708,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                             overflow: TextOverflow.ellipsis,
                             softWrap: true,
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: _num > 0 ? Colors.black : Colors.grey,
                               fontWeight: _num > 0
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -1268,7 +1269,7 @@ class _MessageItemState extends State<MessageItem> {
   showMessageItemSheet() {
     Get.bottomSheet(
       Container(
-        height: 260,
+        height: 200,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
@@ -1279,7 +1280,22 @@ class _MessageItemState extends State<MessageItem> {
         ),
         child: Column(
           children: [
-            SizedBox(height: 20),
+            bottomSheetItem(
+              Icon(Icons.forward, color: kPrimaryColor),
+              'Forward...',
+              () => Get.to(ForwardToScreen(
+                widget._messageText,
+                widget._messageTimeStamp,
+                widget._senderId,
+                widget._senderName,
+                widget._senderProfileImage,
+                widget._messageImage,
+                widget._messageType,
+                widget._messageId,
+                widget._roomId,
+                widget._isClub,
+              )),
+            ),
             widget._senderId == kMyId
                 ? bottomSheetItem(
                     Icon(CupertinoIcons.delete, color: kPrimaryColor),
@@ -1304,58 +1320,38 @@ class _MessageItemState extends State<MessageItem> {
                     },
                   )
                 : Container(),
-            SizedBox(height: 20),
-            // widget._messageImage != null
-            //     ? bottomSheetItem(
-            //         Icon(Icons.download_outlined, color: kPrimaryColor),
-            //         'Download photo',
-            //         () {
-            //           final roomMessagesRef = kChatRoomsRef
-            //               .doc(widget._roomId)
-            //               .collection('RoomMessages');
+            widget._messageImage.length > 0
+                ? bottomSheetItem(
+                    Icon(Icons.download_outlined, color: kPrimaryColor),
+                    'Download photo',
+                    () {
+                      final roomMessagesRef = kChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
 
-            //           if (widget._senderId == kMyId)
-            //             roomMessagesRef.doc(widget._messageId).delete();
+                      if (widget._senderId == kMyId)
+                        roomMessagesRef.doc(widget._messageId).delete();
 
-            //           Get.back();
-            //         },
-            //       )
-            //     : Container(),
-            SizedBox(height: 20),
-            // widget._messageText != null ||
-            //         widget._messageText == '' && widget._messageImage == null
-            //     ? bottomSheetItem(
-            //         Icon(Icons.copy, color: kPrimaryColor),
-            //         'Copy message text',
-            //         () {
-            //           final roomMessagesRef = kChatRoomsRef
-            //               .doc(widget._roomId)
-            //               .collection('RoomMessages');
+                      Get.back();
+                    },
+                  )
+                : Container(),
+            widget._messageText != '' && widget._messageImage.length < 1
+                ? bottomSheetItem(
+                    Icon(Icons.copy, color: kPrimaryColor),
+                    'Copy message text',
+                    () {
+                      final roomMessagesRef = kChatRoomsRef
+                          .doc(widget._roomId)
+                          .collection('RoomMessages');
 
-            //           if (widget._senderId == kMyId)
-            //             roomMessagesRef.doc(widget._messageId).delete();
+                      if (widget._senderId == kMyId)
+                        roomMessagesRef.doc(widget._messageId).delete();
 
-            //           Get.back();
-            //         },
-            //       )
-            //     : Container(),
-            SizedBox(height: 20),
-            bottomSheetItem(
-              Icon(Icons.forward, color: kPrimaryColor),
-              'Forward...',
-              () => Get.to(ForwardToScreen(
-                widget._messageText,
-                widget._messageTimeStamp,
-                widget._senderId,
-                widget._senderName,
-                widget._senderProfileImage,
-                widget._messageImage,
-                widget._messageType,
-                widget._messageId,
-                widget._roomId,
-                widget._isClub,
-              )),
-            ),
+                      Get.back();
+                    },
+                  )
+                : Container(),
           ],
         ),
       ),
@@ -1392,14 +1388,11 @@ class _MessageItemState extends State<MessageItem> {
                           widget._senderName,
                         ),
                       ),
-                      child: Hero(
-                        tag: widget._senderId,
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey[100],
-                          backgroundImage:
-                              NetworkImage(widget._senderProfileImage),
-                        ),
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey[100],
+                        backgroundImage:
+                            NetworkImage(widget._senderProfileImage),
                       ),
                     )
                   : Container(),
@@ -1430,7 +1423,7 @@ class _MessageItemState extends State<MessageItem> {
                               widget._messageText,
                               style: TextStyle(
                                 color: myMessage ? Colors.white : Colors.black,
-                                fontSize: 15,
+                                fontSize: 14,
                                 height: 1.5,
                               ),
                             ),
@@ -1600,20 +1593,23 @@ Widget noRoomChatsMessage(String _imgUrl, String _name, String _userId) {
 }
 
 Widget bottomSheetItem(_icon, _text, _func) {
-  return GestureDetector(
-    onTap: _func,
-    child: Row(
-      children: [
-        _icon,
-        SizedBox(width: 10),
-        Text(
-          _text,
-          style: TextStyle(
-            fontSize: 16,
-            color: Get.isDarkMode ? Colors.white : Colors.black,
+  return Container(
+    margin: EdgeInsets.only(bottom: 15),
+    child: GestureDetector(
+      onTap: _func,
+      child: Row(
+        children: [
+          _icon,
+          SizedBox(width: 10),
+          Text(
+            _text,
+            style: TextStyle(
+              fontSize: 16,
+              color: Get.isDarkMode ? Colors.white : Colors.black,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:reflex/views/club_info.dart';
+import 'package:reflex/widgets/widget.dart';
 
 Future insertSignupData(
   String _email,
@@ -273,7 +276,7 @@ Future sendPhoto(List _imagesUrl, _roomId, _isClub) async {
           'messageText': 'suCsFIIj4ezOI6QSlIImgQ==',
           'messageImage': _imagesUrl,
           'messageType': 'photoMessage',
-          'sendTime': DateTime.now().toUtc(),
+          'sendTime': FieldValue.serverTimestamp(),
           'sender': kMyName,
           'senderId': kMyId,
           'senderProfileImage': kMyProfileImage,
@@ -283,10 +286,66 @@ Future sendPhoto(List _imagesUrl, _roomId, _isClub) async {
 
 Future updateRoomLastInfo(String _roomId, String _message) async {
   await kChatRoomsRef.doc(_roomId).update({
-    'lastRoomMessageTime': DateTime.now(),
+    'lastRoomMessageTime': FieldValue.serverTimestamp(),
     'lastRoomMessage': _message,
     'lastRoomMessageSenderId': kMyId,
   });
+}
+
+Future pickImages(String _roomId, bool _isClub) async {
+  FilePickerResult result = await FilePicker.platform.pickFiles(
+    allowMultiple: true,
+    type: FileType.custom,
+    allowedExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+  );
+
+  if (result != null) {
+    List<File> files = result.paths.map((path) => File(path)).toList();
+
+    uploadImage(files, _roomId, _isClub);
+
+    // Get.back();
+  } else {
+    // User canceled the picker
+  }
+}
+
+Future uploadImage(List<File> _files, String _roomId, bool _isClub) async {
+  try {
+    List _allUrls = [];
+
+    for (int i = 0; i < _files.length; i++) {
+      print(i);
+
+      String filePath = 'imagePosts/${DateTime.now()}.jpg';
+      FirebaseStorage storage = FirebaseStorage.instance;
+      UploadTask uploadTask = storage.ref().child(filePath).putFile(_files[i]);
+      TaskSnapshot taskSnapshot = await uploadTask;
+      await uploadTask.whenComplete(() {
+        print('upload complete');
+      });
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      _allUrls.add(imageUrl);
+    }
+
+    await sendPhoto(_allUrls, _roomId, _isClub);
+
+    _isClub
+        ? await kClubChatRoomsRef.doc(_roomId).update({
+            'lastRoomMessageTime': DateTime.now(),
+            'lastRoomMessage': '🌄 Sent a photo',
+            'lastRoomMessageSenderId': kMyId,
+          })
+        : await kChatRoomsRef.doc(_roomId).update({
+            'lastRoomMessageTime': DateTime.now(),
+            'lastRoomMessage': '🌄 Sent a photo',
+            'lastRoomMessageSenderId': kMyId,
+          });
+  } catch (e) {
+    print(e);
+
+    singleButtonDialogue(e);
+  }
 }
 
 createClub(
