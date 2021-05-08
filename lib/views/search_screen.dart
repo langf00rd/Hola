@@ -218,7 +218,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      // color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: DefaultTabController(
           length: 3,

@@ -258,7 +258,7 @@ class _UserScreenState extends State<UserScreen> {
                         Container(
                           decoration: BoxDecoration(
                             color: Get.isDarkMode
-                                ? Colors.grey[900]
+                                ? kDarkBodyThemeBlack
                                 : Colors.grey[100],
                             borderRadius: BorderRadius.circular(50),
                           ),

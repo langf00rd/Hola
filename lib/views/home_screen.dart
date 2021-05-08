@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      // color: Get.isDarkMode ? kDarkThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,

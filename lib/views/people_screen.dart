@@ -122,14 +122,14 @@ class _PeopleScreenState extends State<PeopleScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      // color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
           appBar: AppBar(
-             backgroundColor:
+            backgroundColor:
                 !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-             elevation: 0,
+            elevation: 0,
             title: Text(
               'Find People',
               style: TextStyle(
@@ -156,7 +156,6 @@ class _PeopleScreenState extends State<PeopleScreen> {
             ],
           ),
           body: Container(
-            color: !Get.isDarkMode ? Colors.white : Colors.black,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

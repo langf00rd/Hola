@@ -421,7 +421,7 @@ class _MessageTileState extends State<MessageTile> {
   Widget build(BuildContext context) {
     DateTime myDateTime =
         lastMessageTime != null ? lastMessageTime.toDate() : DateTime.now();
-    String _convertedTime = DateFormat('K:mm').format(myDateTime);
+    String _convertedTime = DateFormat('HH:mm a').format(myDateTime);
 
     return Container(
       child: Column(
@@ -451,7 +451,7 @@ class _MessageTileState extends State<MessageTile> {
                 Text(
                   _convertedTime,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.grey,
                     fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -631,7 +631,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
     DateTime myDateTime = _lastRoomMessageTime != null
         ? _lastRoomMessageTime.toDate()
         : DateTime.now();
-    String _convertedTime = DateFormat('K:mm').format(myDateTime);
+    String _convertedTime = DateFormat('HH:mm a').format(myDateTime);
 
     return Container(
       child: Column(
@@ -663,7 +663,7 @@ class ClubMessageTileState extends State<ClubMessageTile> {
                 Text(
                   _convertedTime,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.grey,
                     fontWeight: _num > 0 ? FontWeight.bold : FontWeight.normal,
                   ),

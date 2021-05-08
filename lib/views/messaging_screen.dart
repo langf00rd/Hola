@@ -262,14 +262,16 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      // color: Get.isDarkMode ? Colors.transparent : Colors.transparent,
       child: SafeArea(
         child: Scaffold(
+          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           body: Scaffold(
-            backgroundColor: Get.isDarkMode ? Colors.grey[800] : Colors.white,
+            backgroundColor:
+                Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
             appBar: AppBar(
               backgroundColor:
-                  !Get.isDarkMode ? Colors.white : Colors.grey[900],
+                  !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
               elevation: kShadowInt,
               titleSpacing: 0,
               title: Row(
@@ -350,7 +352,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
               ],
             ),
             bottomNavigationBar: BottomAppBar(
-              color: Get.isDarkMode ? Colors.grey[900] : Colors.white,
+              color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
               elevation: 0,
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 10),

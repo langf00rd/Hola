@@ -10,8 +10,8 @@ Color kPrimaryColor = kGetStorage.read('myThemeColor') != null
     ? kGetStorage.read('myThemeColor')
     : Colors.blueAccent[400];
 Color kAccentColor = Colors.lightGreenAccent;
-Color kDarkThemeBlack = Colors.black;
-Color kDarkBodyThemeBlack = Color(0xff040b15);
+Color kDarkThemeBlack = Color(0xff1E1E1E);
+Color kDarkBodyThemeBlack = Color(0xff121212);
 
 final kDefaultFontBold = 'primaryBold';
 final kDefaultFont = 'primaryFont';

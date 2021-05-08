@@ -39,7 +39,7 @@ class _MyState extends State<My> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      // color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
       child: SafeArea(
         child: Scaffold(
           backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
@@ -77,13 +77,7 @@ class _MyState extends State<My> {
                 ),
                 onPressed: () => Get.to(EditProfileScreen()),
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.share_outlined,
-                  color: Get.isDarkMode ? Colors.white : Colors.black,
-                ),
-                onPressed: () {},
-              ),
+             
             ],
           ),
           body: SingleChildScrollView(
