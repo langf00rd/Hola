@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "188568276945",
+    "project_id": "reflex-app-14791",
+    "storage_bucket": "reflex-app-14791.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188568276945:android:ab153b641243e46bc8daf0",
+        "android_client_info": {
+          "package_name": "com.example.reflex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "188568276945-npcr7maom4cqo47h16mb90qr50mj8gp7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcEoqjf4sbPDanFVq6owavRWnbuytbS30"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "188568276945-npcr7maom4cqo47h16mb90qr50mj8gp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
