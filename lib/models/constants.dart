@@ -17,6 +17,12 @@ final kDefaultFontBold = 'primaryBold';
 final kDefaultFont = 'primaryFont';
 final kShadowInt = 0.0;
 
+final kGiphyApiKey = "BubG443ZmyMcvRAyOs9XtDKjgRUASevv";
+final kGifSearchEndPoint =
+    "https://api.giphy.com/v1/gifs/search?api_key=$kGiphyApiKey&q=happy";
+final kStickerSearchEndPoint =
+    "https://api.giphy.com/v1/stickers/search?api_key=$kGiphyApiKey&q=happy";
+
 // GetStorage constants
 final kMyName = kGetStorage.read('myName');
 final kMyProfileImage = kGetStorage.read('myProfilePicture');

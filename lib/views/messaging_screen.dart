@@ -74,8 +74,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(14),
-            topRight: Radius.circular(14),
+            topLeft: Radius.circular(5),
+            topRight: Radius.circular(5),
           ),
         ),
         child: Column(
@@ -114,6 +114,91 @@ class _MessagingScreenState extends State<MessagingScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  stickersSheet() {
+    Get.bottomSheet(
+      Container(
+        height: MediaQuery.of(context).size.height - 100,
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(5),
+            topRight: Radius.circular(5),
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              inputField(
+                _textController,
+                'Search GIFs and Stickers',
+                '',
+                TextInputType.text,
+              ),
+              StreamBuilder(
+                stream: Stream.fromFuture(
+                  GifAndStickerService.searchStickers(
+                    Uri.https(
+                      'api.giphy.com',
+                      '/v1/stickers/search',
+                      {
+                        'api_key': '$kGiphyApiKey',
+                        // 'limit': '5',
+                        'limit': '${15}',
+                        'q': '{sad}',
+                        // 'total_count': '5'
+                      },
+                    ),
+                  ),
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData &&
+                      snapshot.connectionState == ConnectionState.done) {
+                    return Column(
+                      children: [
+                        Wrap(
+                          children:
+                              List.generate(snapshot.data.length, (index) {
+                            return Column(
+                              children: [
+                                stickerContainer(
+                                  '${snapshot.data['data'][index]['images']['original']['url']}',
+                                ),
+                                Text('$index'),
+                              ],
+                            );
+                          }),
+                        ),
+                      ],
+                    );
+                  } else if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return Container(
+                      height: 100,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  } else if (snapshot.hasError) {
+                    print(snapshot.error);
+                  } else if (!snapshot.hasData) {
+                    return Text('No Data');
+                  }
+
+                  return Container(
+                    height: MediaQuery.of(context).size.height / 2,
+                    child: Center(
+                      child: Text('refresh'),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 
@@ -361,6 +446,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                     Expanded(
                       flex: 1,
                       child: GestureDetector(
+                        onTap: () => stickersSheet(),
                         child: Icon(
                           CupertinoIcons.smiley,
                           size: 25,
@@ -374,7 +460,6 @@ class _MessagingScreenState extends State<MessagingScreen> {
                         child: Icon(
                           CupertinoIcons.plus_square,
                           size: 25,
-                          // color: Colors.grey,
                         ),
                       ),
                     ),

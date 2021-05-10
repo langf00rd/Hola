@@ -1274,8 +1274,8 @@ class _MessageItemState extends State<MessageItem> {
         decoration: BoxDecoration(
           color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(14),
-            topRight: Radius.circular(14),
+            topLeft: Radius.circular(5),
+            topRight: Radius.circular(5),
           ),
         ),
         child: Column(
@@ -1635,4 +1635,8 @@ Widget fillInMessageTile() {
       kMyId,
     ),
   );
+}
+
+stickerContainer(_url) {
+  return Container(width: 100, child: Image.network(_url));
 }

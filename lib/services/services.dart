@@ -479,3 +479,18 @@ Future setTypingState(bool _isTyping, String _roomId) async {
       .doc(kMyId)
       .update({'isTyping': _isTyping});
 }
+
+class GifAndStickerService {
+  static Future searchStickers(url) async {
+    if (url != '') {
+      var res = await http.get(url);
+
+      // var response = await http.get(url);
+
+      if (res.statusCode == 200) {
+        var result = jsonDecode(res.body);
+        return result;
+      }
+    }
+  }
+}
