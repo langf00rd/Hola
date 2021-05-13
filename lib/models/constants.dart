@@ -4,18 +4,23 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:reflex/views/my.dart';
 
-Color kPrimaryColor = kGetStorage.read('myThemeColor') != null
-    ? kGetStorage.read('myThemeColor')
-    : Colors.blueAccent[400];
-Color kAccentColor = Colors.lightGreenAccent;
+Color kPrimaryColor = Color(0xff4a89dc);
+Color kAccentColor = Color(0xff8cc152);
 Color kDarkThemeBlack = Color(0xff1E1E1E);
-Color kDarkBodyThemeBlack = Color(0xff121212);
+Color kDarkBodyThemeBlack = Color(0xff1A2633);
+Color kDarkThemeAccent = Colors.blueGrey[900];
+Color kDarkDeep = Colors.blueGrey[900];
+Color kPrimaryLight = Color(0xff5d9cec);
+Color kAppBarColor = !Get.isDarkMode ? kAppBarColor : kDarkThemeAccent;
+
+// 5d9cec 4a89dc
+
+// 8cc152
 
 final kDefaultFontBold = 'primaryBold';
 final kDefaultFont = 'primaryFont';
-final kShadowInt = 0.0;
+final kShadowInt = 0.9;
 
 final kGiphyApiKey = "BubG443ZmyMcvRAyOs9XtDKjgRUASevv";
 final kGifSearchEndPoint =
@@ -53,24 +58,6 @@ BoxDecoration kContainerBorderDecoration = BoxDecoration(
   ),
 );
 
-GestureDetector appBarCircleAvatar = GestureDetector(
-  onTap: () => Get.to(My()),
-  child: Container(
-    padding: EdgeInsets.all(5),
-    child: kMyProfileImage == null
-        ? CircleAvatar(
-            backgroundColor:
-                Get.isDarkMode ? Colors.grey[800] : Colors.grey[100],
-            backgroundImage: AssetImage('assets/temporalPhoto.png'),
-          )
-        : CircleAvatar(
-            backgroundColor:
-                Get.isDarkMode ? Colors.grey[800] : Colors.grey[100],
-            backgroundImage: NetworkImage(kMyProfileImage),
-          ),
-  ),
-);
-
 TextStyle kFont23 = TextStyle(
   fontSize: 23,
   color: Get.isDarkMode ? Colors.white : Colors.black,
@@ -104,7 +91,6 @@ TextStyle kGrey16 = TextStyle(
 
 TextStyle placeholderTextStyle = TextStyle(
   fontSize: 16,
-  // fontWeight: FontWeight.bold,
 );
 
 TextStyle kBold15 = TextStyle(
@@ -112,13 +98,6 @@ TextStyle kBold15 = TextStyle(
   color: Get.isDarkMode ? Colors.white : Colors.black,
   fontWeight: FontWeight.bold,
 );
-
-// TextStyle kFont13 = TextStyle(
-//   fontSize: 13,
-//   color: Get.isDarkMode ? Colors.white : Colors.black,
-//
-//   // fontWeight:FontWeight.bold,
-// );
 
 TextStyle kBold16 = TextStyle(
   fontSize: 16,

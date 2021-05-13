@@ -31,18 +31,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
   // final AudioCache player = AudioCache();
   // final alarmAudioPath = "messageSent.mp3";
 
-  playMessageSentTone() {
-    // player.play(alarmAudioPath);
-    //
-    //
-    //  AudioCache cache = new AudioCache();
-    //At the next line, DO NOT pass the entire reference such as assets/yes.mp3. This will not work.
-    //Just pass the file name only.
-    //  cache.play("messageSent.mp3");
-    //
-    //
-    //
-  }
+  // playMessageSentTone() {
+  //   player.play(alarmAudioPath);
+
+  //   // AudioCache cache = new AudioCache();
+  //   // At the next line, DO NOT pass the entire reference such as assets/yes.mp3. This will not work.
+  //   // Just pass the file name only.
+  //   // cache.play("messageSent.mp3");
+  // }
 
   Future checkRoomExist() async {
     try {
@@ -69,20 +65,23 @@ class _MessagingScreenState extends State<MessagingScreen> {
   plusButtonSheet() {
     Get.bottomSheet(
       Container(
-        height: 200,
+        // height: 160,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+          color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(5),
             topRight: Radius.circular(5),
           ),
         ),
-        child: Column(
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            bottomSheetItem(
-                Icon(CupertinoIcons.photo, color: kPrimaryColor), 'Share photo',
-                () async {
+            bottomSheetRoundItem(
+                Icon(CupertinoIcons.photo_fill, color: Colors.white),
+                'Share photo',
+                Colors.grey[800], () async {
               if (mounted) {
                 setState(() {
                   loading = true;
@@ -96,19 +95,16 @@ class _MessagingScreenState extends State<MessagingScreen> {
                 }
               });
             }),
-            bottomSheetItem(
-              Icon(CupertinoIcons.keyboard, color: kPrimaryColor),
+            bottomSheetRoundItem(
+              Icon(CupertinoIcons.keyboard, color: Colors.white),
               'Use voice typing',
+              kPrimaryColor,
               () {},
             ),
-            bottomSheetItem(
-              Icon(CupertinoIcons.folder, color: kPrimaryColor),
-              'Send a file',
-              () {},
-            ),
-            bottomSheetItem(
-              Icon(CupertinoIcons.smiley, color: kPrimaryColor),
-              'Share sticker / GIF',
+            bottomSheetRoundItem(
+              Icon(CupertinoIcons.folder_fill, color: Colors.white),
+              'Send file',
+              kDarkDeep,
               () {},
             ),
           ],
@@ -123,7 +119,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
         height: MediaQuery.of(context).size.height - 100,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Get.isDarkMode ? kDarkThemeBlack : Colors.white,
+          color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(5),
             topRight: Radius.circular(5),
@@ -167,7 +163,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                                 stickerContainer(
                                   '${snapshot.data['data'][index]['images']['original']['url']}',
                                 ),
-                                Text('$index'),
+                                // Text('$index'),
                               ],
                             );
                           }),
@@ -277,7 +273,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
           return Container(
             height: MediaQuery.of(context).size.height - 200,
             child: Center(
-              child: Text('Fetching history...'),
+              child: myLoader(),
             ),
           );
         }
@@ -347,185 +343,200 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // color: Get.isDarkMode ? Colors.transparent : Colors.transparent,
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
-          body: Scaffold(
-            backgroundColor:
-                Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
-            appBar: AppBar(
-              backgroundColor:
-                  !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-              elevation: kShadowInt,
-              titleSpacing: 0,
-              title: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => widget._userId != kMyId
-                        ? Get.to(
-                            UserScreen(
-                              widget._userId,
-                              widget._profilePhoto,
-                              widget._name,
-                            ),
-                          )
-                        : () {},
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-                      child: Hero(
-                        tag: widget._userId,
-                        child: CircleAvatar(
-                          backgroundColor: Get.isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          backgroundImage: NetworkImage(widget._profilePhoto),
-                        ),
+      // color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
+      child: Scaffold(
+        backgroundColor:
+            Get.isDarkMode ? kDarkBodyThemeBlack : Colors.grey[100],
+        body: Scaffold(
+          backgroundColor:
+              Get.isDarkMode ? kDarkBodyThemeBlack : Colors.grey[100],
+          appBar: AppBar(
+            backgroundColor:kAppBarColor,
+            elevation: kShadowInt,
+            titleSpacing: 0,
+            title: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+                  child: Hero(
+                    tag: widget._userId,
+                    child: AppBarCircleAvatar(
+                      widget._profilePhoto,
+                      UserScreen(
+                        widget._userId,
+                        widget._profilePhoto,
+                        widget._name,
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget._name,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                          style: TextStyle(
-                            color:
-                                !Get.isDarkMode ? Colors.black : Colors.white,
-                          ),
-                        ),
-                        _isUserTyping != null && _isUserTyping
-                            ? Text(
-                                _isUserTyping ? 'is typing...' : 'active',
-                                overflow: TextOverflow.ellipsis,
-                                softWrap: true,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: !Get.isDarkMode
-                                      ? Colors.grey
-                                      : Colors.white,
-                                ),
-                              )
-                            : Container(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: kPrimaryColor,
                 ),
-                onPressed: () {
-                  updateLastRoomVisitTime(_roomId);
-                  Get.back();
-                },
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: kPrimaryColor,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget._name,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      _isUserTyping != null && _isUserTyping
+                          ? Text(
+                              _isUserTyping ? 'is typing...' : 'active',
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'active',
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ],
                   ),
-                  onPressed: () {},
                 ),
               ],
             ),
-            bottomNavigationBar: BottomAppBar(
-              color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
-              elevation: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: GestureDetector(
-                        onTap: () => stickersSheet(),
-                        child: Icon(
-                          CupertinoIcons.smiley,
-                          size: 25,
-                        ),
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                updateLastRoomVisitTime(_roomId);
+                Get.back();
+              },
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: Colors.white,
+                ),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          bottomNavigationBar: BottomAppBar(
+            color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
+            elevation: 0,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: GestureDetector(
+                      onTap: () => plusButtonSheet(),
+                      child: Icon(
+                        CupertinoIcons.plus_square_fill,
+                        size: 25,
+                        color: Get.isDarkMode ? Colors.white : kPrimaryColor,
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: GestureDetector(
-                        onTap: () => plusButtonSheet(),
-                        child: Icon(
-                          CupertinoIcons.plus_square,
-                          size: 25,
-                        ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Container(
+                      height: 38,
+                      width: MediaQuery.of(context).size.width - 300,
+                      decoration: BoxDecoration(
+                        color: Get.isDarkMode
+                            ? kDarkThemeAccent
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(100),
                       ),
-                    ),
-                    Expanded(
-                      flex: 5,
-                      child: Container(
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Get.isDarkMode
-                              ? Colors.transparent
-                              : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: TextFormField(
-                          keyboardType: TextInputType.multiline,
-                          maxLines: null,
-                          controller: _textController,
-                          onChanged: (value) {
-                            if (mounted) {
-                              setState(() {
-                                isTyping = true;
-                              });
-                            }
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: TextFormField(
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                              controller: _textController,
+                              onChanged: (value) {
+                                if (mounted) {
+                                  setState(() {
+                                    isTyping = true;
+                                  });
+                                }
 
-                            setTypingState(isTyping, _roomId);
+                                setTypingState(isTyping, _roomId);
 
-                            Timer(Duration(seconds: 3), () {
-                              if (mounted) {
-                                setState(() {
-                                  isTyping = false;
+                                Timer(Duration(seconds: 3), () {
+                                  if (mounted) {
+                                    setState(() {
+                                      isTyping = false;
+                                    });
+                                  }
+
+                                  setTypingState(isTyping, _roomId);
                                 });
-                              }
-
-                              setTypingState(isTyping, _roomId);
-                            });
-                          },
-                          decoration: InputDecoration(
-                            focusedBorder:
-                                OutlineInputBorder(borderSide: BorderSide.none),
-                            enabledBorder:
-                                OutlineInputBorder(borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.only(left: 15),
-                            hintText: "Type a message...",
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              // color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    _textController.text.isNotEmpty
-                        ? Container(height: 0, width: 0)
-                        : Expanded(
-                            flex: 1,
-                            child: GestureDetector(
-                              child: Icon(
-                                CupertinoIcons.mic,
-                                size: 25,
-                                // color: Colors.grey[800],
+                              },
+                              decoration: InputDecoration(
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
+                                contentPadding: EdgeInsets.only(left: 15),
+                                hintText: "Type a message...",
+                                hintStyle: TextStyle(
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ),
-                    _textController.text.isNotEmpty
-                        ? Expanded(
-                            flex: 1,
+                          Container(
+                            margin: EdgeInsets.only(right: 5),
+                            child: GestureDetector(
+                              onTap: () => stickersSheet(),
+                              child: Icon(
+                                CupertinoIcons.smiley,
+                                size: 25,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _textController.text.isNotEmpty
+                      ? Container(height: 0, width: 0)
+                      : Expanded(
+                          child: GestureDetector(
+                            child: Container(
+                              margin: EdgeInsets.only(left: 10),
+                              decoration: BoxDecoration(
+                                color: kPrimaryColor,
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              width: 40,
+                              height: 40,
+                              child: Icon(
+                                CupertinoIcons.mic_fill,
+                                size: 22,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                  SizedBox(width: 10),
+                  _textController.text.isNotEmpty
+                      ? Expanded(
+                          flex: 1,
+                          child: Container(
+                            width: 40,
+                            height: 40,
                             child: IconButton(
                               onPressed: () {
                                 if (_textController.text.trim() != '') {
@@ -540,37 +551,37 @@ class _MessagingScreenState extends State<MessagingScreen> {
                                 color: kPrimaryColor,
                               ),
                             ),
-                          )
-                        : Container(width: 0, height: 0),
-                  ],
-                ),
+                          ),
+                        )
+                      : Container(width: 0, height: 0),
+                ],
               ),
             ),
-            body: Container(
-              decoration: BoxDecoration(
-                color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
-              ),
-              height: MediaQuery.of(context).size.height,
-              child: SingleChildScrollView(
-                controller: _controller,
-                child: Padding(
-                  padding: EdgeInsets.all(10.0),
-                  child: Column(
-                    children: [
-                      messagesStreamBuilder,
-                      loading
-                          ? Column(
-                              children: [
-                                SizedBox(height: 30),
-                                myLoader(),
-                                SizedBox(height: 10),
-                                Text('Sending photo... $percentage%'),
-                                SizedBox(height: 30),
-                              ],
-                            )
-                          : Container(),
-                    ],
-                  ),
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
+            ),
+            height: MediaQuery.of(context).size.height,
+            child: SingleChildScrollView(
+              controller: _controller,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    messagesStreamBuilder,
+                    loading
+                        ? Column(
+                            children: [
+                              SizedBox(height: 30),
+                              myLoader(),
+                              SizedBox(height: 10),
+                              Text('Sending photo... $percentage%'),
+                              SizedBox(height: 30),
+                            ],
+                          )
+                        : Container(),
+                  ],
                 ),
               ),
             ),

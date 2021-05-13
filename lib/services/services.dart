@@ -7,10 +7,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:reflex/views/club_info.dart';
 import 'package:reflex/widgets/widget.dart';
+
+// import 'package:audioplayers/audio_cache.dart';
 
 Future insertSignupData(
   String _email,
@@ -95,6 +98,7 @@ Future createRoom(roomId, personId) async {
     'lastMessageTime': DateTime.now().toUtc(),
     'lastRoomMessage': 'You are now connected',
     'lastRoomMessageSenderId': '',
+    'lastRoomMessageSent': true,
   });
 
   //update chatHistoryMembers field for both users
@@ -189,6 +193,15 @@ Future setRoomToken(String _roomId) async {
 }
 
 Future sendMessage(_roomId, _personId, _textControllerText) async {
+  String _url = "https://fcm.googleapis.com/fcm/send";
+
+  final key = Key.fromLength(32);
+  final iv = IV.fromLength(16);
+  final encrypter = Encrypter(AES(key));
+  var plainMessageText = _textControllerText;
+  final decrypted = encrypter.decrypt64(plainMessageText, iv: iv);
+
+  //insert room message
   await kChatRoomsRef.doc(_roomId).collection('RoomMessages').add({
     'messageText': _textControllerText,
     'messageImage': [],
@@ -197,15 +210,41 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
     'sender': kMyName,
     'senderId': kMyId,
     'senderProfileImage': kMyProfileImage,
+    'sent': false,
+  }).then((docRef) {
+    //play message sent tone
+    playSentTone() async {
+      final player = AudioPlayer();
+      await player.setAsset('assets/messageSent.mp3');
+      player.play();
+    }
+
+    updateLastRoomMessageSentStatus() async {
+      await kChatRoomsRef.doc(_roomId).update({
+        'lastRoomMessageSent': true,
+      }).then((value) => print('sent flag'));
+    }
+
+    //update message sent status
+    kChatRoomsRef
+        .doc(_roomId)
+        .collection('RoomMessages')
+        .doc(docRef.id)
+        .update({'sent': true});
+
+    playSentTone();
+
+
+    // update lastRoomeMessageSent status
+    updateLastRoomMessageSentStatus();
   });
 
-  String _url = "https://fcm.googleapis.com/fcm/send";
-
-  final key = Key.fromLength(32);
-  final iv = IV.fromLength(16);
-  final encrypter = Encrypter(AES(key));
-  var plainMessageText = _textControllerText;
-  final decrypted = encrypter.decrypt64(plainMessageText, iv: iv);
+  await kChatRoomsRef.doc(_roomId).update({
+    'lastRoomMessage': decrypted,
+    'lastMessageTime': DateTime.now().toUtc(),
+    'lastRoomMessageSenderId': kMyId,
+    'lastRoomMessageSent': false,
+  });
 
   await kUsersRef.doc(_personId).get().then((doc) {
     http.post(
@@ -233,12 +272,6 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
         },
       ),
     );
-  });
-
-  await kChatRoomsRef.doc(_roomId).update({
-    'lastMessageTime': DateTime.now().toUtc(),
-    'lastRoomMessage': decrypted,
-    'lastRoomMessageSenderId': kMyId,
   });
 }
 
@@ -303,8 +336,6 @@ Future pickImages(String _roomId, bool _isClub) async {
     List<File> files = result.paths.map((path) => File(path)).toList();
 
     uploadImage(files, _roomId, _isClub);
-
-    // Get.back();
   } else {
     // User canceled the picker
   }
@@ -484,8 +515,6 @@ class GifAndStickerService {
   static Future searchStickers(url) async {
     if (url != '') {
       var res = await http.get(url);
-
-      // var response = await http.get(url);
 
       if (res.statusCode == 200) {
         var result = jsonDecode(res.body);

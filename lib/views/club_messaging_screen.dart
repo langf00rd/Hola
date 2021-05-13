@@ -236,26 +236,18 @@ class _ClubMessagingScreenState extends State<ClubMessagingScreen> {
               titleSpacing: 0,
               title: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Get.to(
-                      ClubInfoScreen(
-                        widget._clubId,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+                    child: Hero(
+                      tag: widget._clubId,
+                      child: AppBarCircleAvatar(
                         widget._clubProfileImage,
-                        widget._clubName,
-                        widget._clubDescription,
-                        widget._clubCategory,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-                      child: Hero(
-                        tag: widget._clubId,
-                        child: CircleAvatar(
-                          backgroundColor: Get.isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          backgroundImage:
-                              NetworkImage(widget._clubProfileImage),
+                        ClubInfoScreen(
+                          widget._clubId,
+                          widget._clubProfileImage,
+                          widget._clubName,
+                          widget._clubDescription,
+                          widget._clubCategory,
                         ),
                       ),
                     ),

@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:reflex/models/constants.dart';
 import 'package:reflex/services/services.dart';
+import 'package:reflex/views/settings.dart';
 import 'package:reflex/views/new_message.dart';
 import 'package:reflex/views/people_screen.dart';
 import 'package:reflex/views/search_screen.dart';
@@ -34,198 +35,195 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // color: Get.isDarkMode ? kDarkThemeBlack : Colors.black,
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-          appBar: AppBar(
-            backgroundColor:
-                !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-            elevation: kShadowInt,
-            title: Text(
-              'Space',
-              style: TextStyle(
-                fontSize: 23,
-                color: Get.isDarkMode ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
+      // color: !Get.isDarkMode ? Colors.transparent : kDarkBodyThemeBlack,
+      child: Scaffold(
+        backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
+        appBar: AppBar(
+          backgroundColor: kAppBarColor,
+          elevation: kShadowInt,
+          title: Text(
+            'Space',
+            style: TextStyle(
+              fontSize: 23,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            centerTitle: false,
-            leading: Container(
-              margin: EdgeInsets.all(4),
-              child: appBarCircleAvatar,
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  CupertinoIcons.search,
-                  size: 27,
-                  color: Get.isDarkMode ? Colors.white : Colors.black,
-                ),
-                onPressed: () => Get.to(SearchScreen()),
-              ),
-              IconButton(
-                icon: Icon(
-                  CupertinoIcons.plus_app,
-                  size: 27,
-                  color: Get.isDarkMode ? Colors.white : Colors.black,
-                ),
-                onPressed: () => Get.to(NewMessageScreen()),
-              ),
-            ],
           ),
-          floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+          centerTitle: false,
+          leading: Container(
+            margin: EdgeInsets.all(4),
+            child: AppBarCircleAvatar(kMyProfileImage, My()),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                CupertinoIcons.search,
+                size: 27,
+                color: Colors.white,
+              ),
+              onPressed: () => Get.to(SearchScreen()),
+            ),
+            IconButton(
+              icon: Icon(
+                CupertinoIcons.plus_app_fill,
+                size: 27,
+                color: Colors.white,
+              ),
+              onPressed: () => Get.to(NewMessageScreen()),
+            ),
+          ],
+        ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              backgroundColor: kPrimaryColor,
+              elevation: kShadowInt,
+              child: Icon(
+                CupertinoIcons.person_2_fill,
+                color: Colors.white,
+              ),
+              onPressed: () => Get.to(PeopleScreen()),
+              heroTag: null,
+            ),
+            SizedBox(height: 20),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              FloatingActionButton(
-                backgroundColor: kPrimaryColor,
-                elevation: kShadowInt,
-                child: Icon(
-                  CupertinoIcons.person_2_fill,
-                  color: Colors.white,
+              SizedBox(
+                height: 60,
+                child: Container(
+                  margin: EdgeInsets.all(10),
+                  child: fakeSearchBox(),
                 ),
-                onPressed: () => Get.to(PeopleScreen()),
-                heroTag: null,
               ),
-              SizedBox(height: 20),
-            ],
-          ),
-          body: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 60,
-                  child: Container(
-                    margin: EdgeInsets.all(10),
-                    child: fakeSearchBox(),
-                  ),
-                ),
-                // hasPrivateMessages
-                //     ? sectionDescription('Private chats')
-                //     : Container(),
-                Flexible(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: kChatRoomsRef
-                        .where('roomUsers', arrayContains: kMyId)
-                        .orderBy(
-                          'lastMessageTime',
-                        )
-                        .snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting)
-                        return Container();
 
-                      if (!snapshot.hasData) return Text('');
+              // SizedBox(height: 10),
 
-                      // if (snapshot.hasData) {
-                      //   if (mounted) {
-                      //     setState(() {
-                      //       hasPrivateMessages = true;
-                      //     });
-                      //   }
-                      // }
+              Flexible(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: kChatRoomsRef
+                      .where('roomUsers', arrayContains: kMyId)
+                      .orderBy(
+                        'lastMessageTime',
+                      )
+                      .snapshots(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return Container();
 
-                      if (snapshot.data.docs.length < 1) {
-                        return Container(
-                          margin: EdgeInsets.only(top: 20, bottom: 20),
-                          child: noDataSnapshotMessage(
-                            'You have no conversation history',
-                            defaultRoundButton(
-                              'Find people',
-                              () => Get.to(PeopleScreen()),
-                            ),
-                          ),
-                        );
-                      }
+                    if (!snapshot.hasData) return Text('');
 
+                    // if (snapshot.hasData) {
+                    //   if (mounted) {
+                    //     setState(() {
+                    //       hasPrivateMessages = true;
+                    //     });
+                    //   }
+                    // }
+
+                    if (snapshot.data.docs.length < 1) {
                       return Container(
-                        width: MediaQuery.of(context).size.width,
-                        child: ListView.builder(
-                          itemCount: snapshot.data.docs.length,
-                          reverse: true,
-                          primary: false,
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            return RoomChatItem(
-                              snapshot.data.docs[index]['roomUsers'],
-                            );
-                          },
+                        margin: EdgeInsets.only(top: 20, bottom: 20),
+                        child: noDataSnapshotMessage(
+                          'You have no conversation history',
+                          defaultRoundButton(
+                            'Find people',
+                            () => Get.to(PeopleScreen()),
+                          ),
                         ),
                       );
-                    },
-                  ),
-                ),
-                // hasGroupMessages ? sectionDescription(' Groups') : Container(),
-                Flexible(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: kClubsRef
-                        .where('clubMembers', arrayContains: kMyId)
-                        .snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            'Error fetching chats...',
-                            style: TextStyle(
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        );
-                      }
+                    }
 
-                      if (snapshot.connectionState == ConnectionState.waiting)
-                        return Container();
-
-                      if (!snapshot.hasData) return Text('');
-
-                      if (snapshot.data.docs.length < 1) {
-                        return Container(
-                          margin: EdgeInsets.only(top: 20, bottom: 20),
-                          child: noDataSnapshotMessage(
-                            'Join groups to engage in group conversations',
-                            defaultRoundButton(
-                              'Create a group',
-                              () => Get.to(StartClub()),
-                            ),
-                          ),
-                        );
-                      }
-
-                      // if (snapshot.hasData) {
-                      //   if (mounted) {
-                      //     setState(() {
-                      //       hasGroupMessages = true;
-                      //     });
-                      //   }
-                      // }
-
-                      return ListView.builder(
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      child: ListView.builder(
                         itemCount: snapshot.data.docs.length,
+                        reverse: true,
                         primary: false,
-                        physics: NeverScrollableScrollPhysics(),
                         scrollDirection: Axis.vertical,
                         shrinkWrap: true,
                         itemBuilder: (context, index) {
-                          return ClubMessageTile(
-                            snapshot.data.docs[index]['clubName'],
-                            snapshot.data.docs[index]['clubProfileImage'],
-                            snapshot.data.docs[index]['clubId'],
-                            snapshot.data.docs[index]['clubDescription'],
-                            snapshot.data.docs[index]['clubCategory'],
+                          return RoomChatItem(
+                            snapshot.data.docs[index]['roomUsers'],
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+
+              Flexible(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: kClubsRef
+                      .where('clubMembers', arrayContains: kMyId)
+                      .snapshots(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error fetching chats...',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return Container();
+
+                    if (!snapshot.hasData) return Text('');
+
+                    if (snapshot.data.docs.length < 1) {
+                      return Container(
+                        margin: EdgeInsets.only(top: 20, bottom: 20),
+                        child: noDataSnapshotMessage(
+                          'Join groups to engage in group conversations',
+                          defaultRoundButton(
+                            'Create a group',
+                            () => Get.to(StartClub()),
+                          ),
+                        ),
+                      );
+                    }
+
+                    // if (snapshot.hasData) {
+                    //   if (mounted) {
+                    //     setState(() {
+                    //       hasGroupMessages = true;
+                    //     });
+                    //   }
+                    // }
+
+                    return ListView.builder(
+                      itemCount: snapshot.data.docs.length,
+                      primary: false,
+                      physics: NeverScrollableScrollPhysics(),
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        return ClubMessageTile(
+                          snapshot.data.docs[index]['clubName'],
+                          snapshot.data.docs[index]['clubProfileImage'],
+                          snapshot.data.docs[index]['clubId'],
+                          snapshot.data.docs[index]['clubDescription'],
+                          snapshot.data.docs[index]['clubCategory'],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

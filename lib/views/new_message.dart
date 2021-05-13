@@ -17,7 +17,7 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
   Widget searchBox() {
     return Container(
       decoration: BoxDecoration(
-        color: Get.isDarkMode ? Colors.black : Colors.grey[200],
+        color: !Get.isDarkMode ? Colors.grey[200] : kDarkThemeAccent,
         borderRadius: BorderRadius.circular(4),
       ),
       child: TextFormField(
@@ -88,8 +88,17 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(
-                              CupertinoIcons.group_solid,
+                            Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Get.isDarkMode
+                                    ? kDarkThemeAccent
+                                    : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: Icon(
+                                CupertinoIcons.person_2_fill,
+                              ),
                             ),
                             SizedBox(width: 10),
                             GestureDetector(
