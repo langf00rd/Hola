@@ -23,19 +23,20 @@ dependencies:
   extended_image: ^4.0.1
   flutter_colorpicker: ^0.4.0
   # pinput: ^1.2.0
-  # image_gallery_saver: '^1.6.9'
+  image_gallery_saver: '^1.6.9'
   # dio: ^4.0.0
   # permission_handler: ^7.0.0
   firebase_messaging:
-  # flutter_local_notifications:
+  flutter_local_notifications:
   http:
   encrypt: ^5.0.0
   file_picker: ^3.0.1
   # flutter_advanced_networkimage: ^0.7.0
-  # audioplayers:
-  # just_audio: ^0.7.4
-# dependency_overrides:
+  # audioplayers: ^0.18.3
+  just_audio: ^0.7.4
+  # dependency_overrides:
   # flutter_svg: ^0.18.0
+  cached_network_image: ^3.0.0
 
 dev_dependencies:
   flutter_test:
