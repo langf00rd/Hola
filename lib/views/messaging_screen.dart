@@ -351,7 +351,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
           backgroundColor:
               Get.isDarkMode ? kDarkBodyThemeBlack : Colors.grey[100],
           appBar: AppBar(
-            backgroundColor:kAppBarColor,
+            backgroundColor: kAppBarColor,
             elevation: kShadowInt,
             titleSpacing: 0,
             title: Row(
@@ -532,23 +532,26 @@ class _MessagingScreenState extends State<MessagingScreen> {
                         ),
                   SizedBox(width: 10),
                   _textController.text.isNotEmpty
-                      ? Expanded(
-                          flex: 1,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            child: IconButton(
-                              onPressed: () {
-                                if (_textController.text.trim() != '') {
-                                  encryptMessage();
-                                  _textController.text = '';
-                                } else
-                                  return;
-                              },
-                              icon: Icon(
-                                CupertinoIcons.paperplane_fill,
-                                size: 25,
-                                color: kPrimaryColor,
+                      ? AnimatedContainer(
+                          duration: Duration(seconds: 1),
+                          child: Expanded(
+                            flex: 1,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              child: IconButton(
+                                onPressed: () {
+                                  if (_textController.text.trim() != '') {
+                                    encryptMessage();
+                                    _textController.text = '';
+                                  } else
+                                    return;
+                                },
+                                icon: Icon(
+                                  CupertinoIcons.paperplane_fill,
+                                  size: 25,
+                                  color: kPrimaryColor,
+                                ),
                               ),
                             ),
                           ),

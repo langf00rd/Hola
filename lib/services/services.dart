@@ -126,6 +126,16 @@ Future updateLastRoomVisitTime(String _roomId) async {
   }
 }
 
+// Future updateLastEnterHomeScreen() async {
+//   try {
+//     await kUsersRef.doc(kMyId).update({
+//       'lastEnterHomeTime': DateTime.now().toUtc(),
+//     });
+//   } catch (e) {
+//     print(e);
+//   }
+// }
+
 Future updateClubLastRoomVisitTime(String _roomId) async {
   try {
     await kClubChatRoomsRef
@@ -212,17 +222,16 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
     'senderProfileImage': kMyProfileImage,
     'sent': false,
   }).then((docRef) {
-    //play message sent tone
+    //play message sent tone and update messageSent status
     playSentTone() async {
       final player = AudioPlayer();
       await player.setAsset('assets/messageSent.mp3');
       player.play();
-    }
 
-    updateLastRoomMessageSentStatus() async {
-      await kChatRoomsRef.doc(_roomId).update({
-        'lastRoomMessageSent': true,
-      }).then((value) => print('sent flag'));
+      // // update lastRoomeMessageSent status
+      // await kChatRoomsRef.doc(_roomId).update({
+      //   'lastRoomMessageSent': true,
+      // }).then((value) => print('sent flag'));
     }
 
     //update message sent status
@@ -232,18 +241,17 @@ Future sendMessage(_roomId, _personId, _textControllerText) async {
         .doc(docRef.id)
         .update({'sent': true});
 
+    kChatRoomsRef.doc(_roomId).update({'lastRoomMessageSent': true}).then(
+        (value) => print('sent flag'));
+
     playSentTone();
-
-
-    // update lastRoomeMessageSent status
-    updateLastRoomMessageSentStatus();
   });
 
   await kChatRoomsRef.doc(_roomId).update({
     'lastRoomMessage': decrypted,
     'lastMessageTime': DateTime.now().toUtc(),
     'lastRoomMessageSenderId': kMyId,
-    'lastRoomMessageSent': false,
+    'lastRoomMessageSent': true,
   });
 
   await kUsersRef.doc(_personId).get().then((doc) {

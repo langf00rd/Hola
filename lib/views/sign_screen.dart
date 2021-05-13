@@ -28,13 +28,13 @@ class _SignScreenState extends State<SignScreen> {
         String _profileImg = doc.data()['profileImage'];
         String _about = doc.data()['aboutUser'];
 
-        kGetStorage.write('myInterestOne', _interestOne);
-        kGetStorage.write('myInterestTwo', _interestTwo);
-        kGetStorage.write('myInterestThree', _interestThree);
-        kGetStorage.write('myProfilePicture', _profileImg);
-        kGetStorage.write('myName', resultUser.displayName);
-        kGetStorage.write('myId', resultUser.uid);
-        kGetStorage.write('myAbout', _about);
+        await kGetStorage.write('myInterestOne', _interestOne);
+        await kGetStorage.write('myInterestTwo', _interestTwo);
+        await kGetStorage.write('myInterestThree', _interestThree);
+        await kGetStorage.write('myProfilePicture', _profileImg);
+        await kGetStorage.write('myName', resultUser.displayName);
+        await kGetStorage.write('myId', resultUser.uid);
+        await kGetStorage.write('myAbout', _about);
 
         Get.offAll(() => HomeScreen());
       });

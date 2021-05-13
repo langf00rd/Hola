@@ -12,7 +12,7 @@ Color kDarkBodyThemeBlack = Color(0xff1A2633);
 Color kDarkThemeAccent = Colors.blueGrey[900];
 Color kDarkDeep = Colors.blueGrey[900];
 Color kPrimaryLight = Color(0xff5d9cec);
-Color kAppBarColor = !Get.isDarkMode ? kAppBarColor : kDarkThemeAccent;
+Color kAppBarColor = !Get.isDarkMode ? kPrimaryColor : kDarkThemeAccent;
 
 // 5d9cec 4a89dc
 

@@ -407,7 +407,7 @@ class _MessageTileState extends State<MessageTile> {
   var lastMessageTime;
   String lastRoomMessage = '...';
   String lastRoomMessageSenderId = '';
-  bool lastRoomMessageSent = false;
+  bool lastRoomMessageSent = true;
 
   var _newProfilePhoto;
 
@@ -608,14 +608,14 @@ class _MessageTileState extends State<MessageTile> {
                                     ),
                                   )
                                 : Container(),
-                            SizedBox(width: 6),
-                            Icon(
-                              lastRoomMessageSent
-                                  ? LineIcons.doubleCheck
-                                  : Icons.access_time_rounded,
-                              color: kPrimaryColor,
-                              size: 17,
-                            ),
+                            lastRoomMessageSenderId == kMyId &&
+                                    lastRoomMessageSent
+                                ? Icon(
+                                    CupertinoIcons.paperplane_fill,
+                                    color: kPrimaryColor,
+                                    size: 15,
+                                  )
+                                : Container(width: 0, height: 0),
                           ],
                         ),
                       ),
@@ -1573,11 +1573,13 @@ class _MessageItemState extends State<MessageItem> {
                                 ),
                                 SizedBox(height: 5),
                                 Container(
-                                  width: 56,
+                                  width: 50,
                                   child: Row(
                                     crossAxisAlignment: myMessage
                                         ? CrossAxisAlignment.end
                                         : CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         dateString,
@@ -1590,8 +1592,9 @@ class _MessageItemState extends State<MessageItem> {
                                       myMessage
                                           ? Icon(
                                               _sent && _sent != null
-                                                  ? LineIcons.doubleCheck
-                                                  : Icons.access_time_rounded,
+                                                  ? CupertinoIcons
+                                                      .paperplane_fill
+                                                  : Icons.timelapse_rounded,
                                               size: 13,
                                               color: Colors.grey[400],
                                             )
@@ -1809,4 +1812,3 @@ Widget fillInMessageTile() {
 stickerContainer(_url) {
   return Container(width: 100, child: Image.network(_url));
 }
-

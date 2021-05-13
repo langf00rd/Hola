@@ -39,108 +39,102 @@ class _UpdateAboutState extends State<UpdateAbout> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
-          appBar: AppBar(
-            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkThemeBlack,
-            title: Text(
-              'About',
-              style: TextStyle(
-                fontSize: 23,
-                color: Get.isDarkMode ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: Get.isDarkMode ? Colors.white : kPrimaryColor,
-              ),
-              onPressed: () => Get.back(),
-            ),
-            actions: [
-              !loading
-                  ? Container(
-                      margin: EdgeInsets.all(10),
-                      width: 113,
-                      child: signButton('Update', () {
-                        if (_aboutController.text.isNotEmpty) {
-                          if (mounted) {
-                            setState(() {
-                              loading = true;
-                            });
-                          }
-                          updateAbout(_aboutController.text.trim())
-                              .then((value) {
-                            if (mounted) {
-                              setState(() {
-                                loading = false;
-                              });
-                            }
-
-                            kGetStorage.remove('myAbout');
-                            setState(() {});
-                            kGetStorage.write(
-                                'myAbout', _aboutController.text.trim());
-
-                            singleButtonDialogue('Updated');
+    return Scaffold(
+      backgroundColor: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.white,
+      appBar: AppBar(
+        backgroundColor: kAppBarColor,
+        title: Text(
+          'About',
+          style: TextStyle(
+            fontSize: 23,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () => Get.back(),
+        ),
+        actions: [
+          !loading
+              ? Container(
+                  margin: EdgeInsets.all(10),
+                  width: 113,
+                  child: signButton('Update', () {
+                    if (_aboutController.text.isNotEmpty) {
+                      if (mounted) {
+                        setState(() {
+                          loading = true;
+                        });
+                      }
+                      updateAbout(_aboutController.text.trim()).then((value) {
+                        if (mounted) {
+                          setState(() {
+                            loading = false;
                           });
                         }
-                      }),
-                    )
-                  : Container(),
-            ],
-          ),
-          body: !loading
-              ? Container(
-                  padding: EdgeInsets.all(20),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 20),
-                        Text('Describe yourself'),
-                        SizedBox(height: 10),
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                          ),
-                          child: TextFormField(
-                            controller: _aboutController,
-                            maxLines: null,
-                            decoration: InputDecoration(
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: EdgeInsets.zero,
-                            ),
+
+                        kGetStorage.remove('myAbout');
+                        setState(() {});
+                        kGetStorage.write(
+                            'myAbout', _aboutController.text.trim());
+
+                        singleButtonDialogue('Updated');
+                      });
+                    }
+                  }),
+                )
+              : Container(),
+        ],
+      ),
+      body: !loading
+          ? Container(
+              padding: EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    Text('Describe yourself'),
+                    SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[300],
                           ),
                         ),
-                        SizedBox(height: 30),
-                        suggestedAbout('Solving global warming 😎'),
-                        suggestedAbout('Available ❤️'),
-                        suggestedAbout('Let\'s chat 🤟🏻'),
-                        suggestedAbout('Changing the world ❤️❤️❤️'),
-                        suggestedAbout('I am online'),
-                        suggestedAbout('Watching a movie 😎'),
-                      ],
+                      ),
+                      child: TextFormField(
+                        controller: _aboutController,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
                     ),
-                  ),
-                )
-              : Center(child: myLoader()),
-        ),
-      ),
+                    SizedBox(height: 30),
+                    suggestedAbout('Solving global warming 😎'),
+                    suggestedAbout('Available ❤️'),
+                    suggestedAbout('Let\'s chat 🤟🏻'),
+                    suggestedAbout('Changing the world ❤️❤️❤️'),
+                    suggestedAbout('I am online'),
+                    suggestedAbout('Watching a movie 😎'),
+                  ],
+                ),
+              ),
+            )
+          : Center(child: myLoader()),
     );
   }
 }

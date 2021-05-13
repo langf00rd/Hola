@@ -217,52 +217,47 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // color: Get.isDarkMode ? kDarkBodyThemeBlack : Colors.black,
-      child: SafeArea(
-        child: DefaultTabController(
-          length: 3,
-          child: Scaffold(
-            backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-            appBar: AppBar(
-              backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
-              title: searchBox(),
-              elevation: 0,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: Get.isDarkMode ? Colors.white : kPrimaryColor,
-                ),
-                onPressed: () => Get.back(),
-              ),
-              bottom: _searchController.value.text.isNotEmpty
-                  ? PreferredSize(
-                      preferredSize: Size.fromHeight(40),
-                      child: Container(
-                        child: myTabBar(
-                          [
-                            textTabLabel('Chats'),
-                            textTabLabel('People'),
-                            textTabLabel('Groups'),
-                          ],
-                          _controller,
-                        ),
-                      ),
-                    )
-                  : PreferredSize(
-                      preferredSize: Size.fromHeight(0),
-                      child: Container(height: 0),
-                    ),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: !Get.isDarkMode ? Colors.white : kDarkBodyThemeBlack,
+        appBar: AppBar(
+          backgroundColor: kAppBarColor,
+          title: searchBox(),
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
             ),
-            body: TabBarView(
-              children: [
-                _myMessagesTab(),
-                _peopleTab(),
-                _groupsTab(),
-              ],
-              controller: _controller,
-            ),
+            onPressed: () => Get.back(),
           ),
+          bottom: _searchController.value.text.isNotEmpty
+              ? PreferredSize(
+                  preferredSize: Size.fromHeight(40),
+                  child: Container(
+                    child: myTabBar(
+                      [
+                        textTabLabel('Chats'),
+                        textTabLabel('People'),
+                        textTabLabel('Groups'),
+                      ],
+                      _controller,
+                    ),
+                  ),
+                )
+              : PreferredSize(
+                  preferredSize: Size.fromHeight(0),
+                  child: Container(height: 0),
+                ),
+        ),
+        body: TabBarView(
+          children: [
+            _myMessagesTab(),
+            _peopleTab(),
+            _groupsTab(),
+          ],
+          controller: _controller,
         ),
       ),
     );

@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // updateLastEnterHomeScreen();
     registerNotification();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(
                 CupertinoIcons.search,
-                size: 27,
+                // size: 27,
                 color: Colors.white,
               ),
               onPressed: () => Get.to(SearchScreen()),
@@ -66,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(
                 CupertinoIcons.plus_app_fill,
-                size: 27,
+                // size: 27,
                 color: Colors.white,
               ),
               onPressed: () => Get.to(NewMessageScreen()),
